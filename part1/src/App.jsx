@@ -6,16 +6,30 @@ const Header = ({course}) => {
   )
 }
 
+const Part = ({name, exercises}) => {
+  return (
+    <p>
+      {name} {exercises}
+    </p>
+  )
+}
+
+
 const Content = ({parts}) => {
   return (
     <>
-      {parts.map((part, index) => (
-        <p key={index}>
-          {part.name} {part.exercises}
-        </p>
-      ))}
+      <Part name={parts[0].name} exercises={parts[0].exercises}/>
+      <Part name={parts[1].name} exercises={parts[1].exercises}/>
+      <Part name={parts[2].name} exercises={parts[2].exercises}/>
     </>
   )
+  /* También se puede con .map()
+  
+  {parts.map((part, index) => (
+    <Part key={index} name={part.name} exercise={part.exercises}/>
+  ))}
+  
+  */
 }
 
 const Total = ({parts}) => {
