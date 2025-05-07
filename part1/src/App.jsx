@@ -26,7 +26,7 @@ const Content = ({parts}) => {
   /* También se puede con .map()
   
   {parts.map((part, index) => (
-    <Part key={index} name={part.name} exercise={part.exercises}/>
+    <Part key={index} name={part.name} exercises={part.exercises}/>
   ))}
   
   */
