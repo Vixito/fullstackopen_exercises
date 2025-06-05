@@ -8,42 +8,6 @@ const Button = ({ handleClick, text }) => {
   )
 }
 
-const Statistics = ({ good, neutral, bad }) => {
-  if (good + neutral + bad === 0) {
-    return (
-      <div>
-        <h1>statistics</h1>
-        <p>No feedback given</p>
-      </div>
-    )
-  } else {
-    return (
-      <div>
-        <h1>statistics</h1>
-        <table>
-          <tbody>
-            <StatisticsLine text="good" value={good} />
-            <StatisticsLine text="neutral" value={neutral} />
-            <StatisticsLine text="bad" value={bad} />
-            <StatisticsLine text="all" value={good + neutral + bad} />
-            <StatisticsLine text="average" value={(good - bad) / (good + neutral + bad)} />
-            <StatisticsLine text="positive" value={(good / (good + neutral + bad)) * 100 + ' %'} />
-          </tbody>
-        </table>
-      </div>
-    )
-  }
-}
-
-const StatisticsLine = ({ text, value }) => {
-  return (
-    <tr>
-      <td>{text}</td>
-      <td>{value}</td>
-    </tr>
-  )
-}
-
 const App = () => {
   const anecdotes = [
     'If it hurts, do it more often.',
@@ -55,9 +19,6 @@ const App = () => {
     'Programming without an extremely heavy use of console.log is same as if a doctor would refuse to use x-rays or blood tests when diagnosing patients.',
     'The only way to go fast, is to go well.'
   ];
-  const [good, setGood] = useState(0);
-  const [neutral, setNeutral] = useState(0);
-  const [bad, setBad] = useState(0);
   const [selected, setSelected] = useState(0);
   const [votes, setVotes] = useState(Array(anecdotes.length).fill(0));
   const voteAnecdote = () => {
@@ -68,16 +29,14 @@ const App = () => {
 
   return (
     <div>
-      <h1>give feedback</h1>
-      <Button handleClick={() => setGood(good + 1)} text="good" />
-      <Button handleClick={() => setNeutral(neutral + 1)} text="neutral" />
-      <Button handleClick={() => setBad(bad + 1)} text="bad" />
-      <Statistics good={good} neutral={neutral} bad={bad} />
-      <h1>anecdote of the day</h1>
+      <h1>Anecdote of the day</h1>
       <p>{anecdotes[selected]}</p>
       <p>has {votes[selected]} votes</p>
       <Button handleClick={voteAnecdote} text="vote" />
       <Button handleClick={() => setSelected(Math.floor(Math.random() * anecdotes.length))} text="next anecdote" />
+      <h1>Anecdote with most votes</h1>
+      <p>{anecdotes[votes.indexOf(Math.max(...votes))]}</p>
+      <p>has {Math.max(...votes)} votes</p>
     </div>
   )
 }
