@@ -1,6 +1,6 @@
 const Course = ({ course }) => {
   const totalExercises = course.parts.reduce((sum, part) => sum + part.exercises, 0);
-
+  // Parte 2.3 ya hecha, aunque lo haya hecho en la parte 2.2
   return (
     <div>
       <h1>{course.name}</h1>
