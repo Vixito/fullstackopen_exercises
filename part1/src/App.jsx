@@ -8,7 +8,7 @@ const Statistics = ({ good, neutral, bad }) => {
         <p>No feedback given</p>
       </div>
     )
-  }else {
+  } else {
     return (
       <div>
         <h1>statistics</h1>
