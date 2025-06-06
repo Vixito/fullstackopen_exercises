@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import personsService from './services/persons'
 
 const Filter = ({ filter, handleFilter }) => {
     return (
@@ -44,13 +44,14 @@ const App = () => {
     const [filter, setFilter] = useState('');
 
     useEffect(() => {
-        axios
-            .get('http://localhost:3001/persons')
-            .then(response => {
-                setPersons(response.data);
+        personsService
+            .getAll()
+            .then(initialPersons => {
+                setPersons(initialPersons);
             })
             .catch(error => {
-                console.error('Error fetching data:', error);
+                console.error('Error fetching persons:', error);
+                alert('Failed to fetch persons. Please try again later.');
             });
     }, [])
 
@@ -65,16 +66,16 @@ const App = () => {
             number: newNumber,
             id: persons.length > 0 ? String(Math.max(...persons.map(p => Number(p.id))) + 1) : "1"
         }
-        axios
-            .post('http://localhost:3001/persons', personObject)
+        personsService
+            .create(personObject)
             .then(response => {
-                console.log('Person added:', response.data);
-                setPersons(persons.concat(personObject))
+                setPersons(persons.concat(response))
                 setNewName('')
                 setNewNumber('')
             })
             .catch(error => {
                 console.error('Error adding person:', error);
+                alert('Failed to add person. Please try again.');
             });
     }
     const handleName = (event) => {
