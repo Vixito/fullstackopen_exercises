@@ -148,10 +148,18 @@ const App = () => {
                 .remove(person.id)
                 .then(() => {
                     setPersons(persons.filter(p => p.id !== person.id))
+                    setNotificationMessage(`Information of ${person.name} has already been removed from server`);
+                    setTimeout(() => {
+                        setNotificationMessage('');
+                    }, 5000);
                 })
                 .catch(error => {
                     console.error('Error deleting person:', error);
-                    alert('Failed to delete person. Please try again.');
+                    setNotificationMessage(`Error: ${error.response.data.error}`);
+                    setTimeout(() => {
+                        setNotificationMessage('');
+                    }, 5000);
+                    setPersons(persons.filter(p => p.id !== person.id)) // Remove the person if delete fails
                 });
         }
     }
