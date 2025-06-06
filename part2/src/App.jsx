@@ -74,13 +74,12 @@ const App = () => {
             })
             .catch(error => {
                 console.error('Error fetching persons:', error);
-                alert('Failed to fetch persons. Please try again later.');
+                setNotificationMessage('Error: error fetching phonebook data');
+                setTimeout(() => {
+                    setNotificationMessage('');
+                }, 5000);
             });
     }, [])
-
-    if (!persons) {
-        return <div>Loading...</div>;
-    }
 
     const addPerson = (event) => {
         event.preventDefault()
@@ -101,7 +100,11 @@ const App = () => {
                     })
                     .catch(error => {
                         console.error('Error updating person:', error)
-                        alert (`Information of ${existingPerson.name} has already been removed from server`);
+                        setNotificationMessage(`Error: ${error.response.data.error}`);
+                        setTimeout(() => {
+                            setNotificationMessage('');
+                        }, 5000);
+                        setPersons(persons.filter(p => p.id !== existingPerson.id)) // Remove the person if update fails
                     })
             }
             return;
@@ -124,7 +127,10 @@ const App = () => {
             })
             .catch(error => {
                 console.error('Error adding person:', error);
-                alert('Failed to add person. Please try again.');
+                setNotificationMessage(`Error: ${error.response.data.error}`);
+                setTimeout(() => {
+                    setNotificationMessage('');
+                }, 5000);
             });
     }
     const handleName = (event) => {
@@ -163,7 +169,10 @@ const App = () => {
             />
             <Notification message={notificationMessage}/>
             <h2>Numbers</h2>
-            <Numbers persons={persons} filter={filter} handleDelete={handleDelete}/>
+            { !persons 
+                ? <div>Loading...</div> 
+                : <Numbers persons={persons} filter={filter} handleDelete={handleDelete}/>
+            }
         </div>
     )
 }
