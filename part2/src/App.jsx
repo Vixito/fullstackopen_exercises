@@ -41,11 +41,30 @@ const Numbers = ({ persons, filter, handleDelete }) => {
     )
 }
 
+const Notification = ({ message }) => {
+    if (!message) {
+        return null;
+    } else if (message.startsWith('Error:')) {
+        return (
+            <div className="error">
+                {message}
+            </div>
+        );
+    } else {
+        return (
+            <div className="success">
+                {message}
+            </div>
+        );
+    }
+}
+
 const App = () => {
-    const [persons, setPersons] = useState([]);
+    const [persons, setPersons] = useState(null);
     const [newName, setNewName] = useState('');
     const [newNumber, setNewNumber] = useState('');
     const [filter, setFilter] = useState('');
+    const [notificationMessage, setNotificationMessage] = useState('');
 
     useEffect(() => {
         personsService
@@ -59,6 +78,10 @@ const App = () => {
             });
     }, [])
 
+    if (!persons) {
+        return <div>Loading...</div>;
+    }
+
     const addPerson = (event) => {
         event.preventDefault()
         const existingPerson = persons.find(person => person.name === newName);
@@ -68,13 +91,17 @@ const App = () => {
                 personsService
                     .update(existingPerson.id, updatedPerson)
                     .then(returnedPerson => {
+                        setNotificationMessage(`Updated ${returnedPerson.name}'s number`);
+                        setTimeout(() => {
+                            setNotificationMessage('');
+                        }, 5000);
                         setPersons(persons.map(p => p.id !== existingPerson.id ? p : returnedPerson))
                         setNewName('')
                         setNewNumber('')
                     })
                     .catch(error => {
                         console.error('Error updating person:', error)
-                        alert('Failed to update person. Maybe it was already removed from server.')
+                        alert (`Information of ${existingPerson.name} has already been removed from server`);
                     })
             }
             return;
@@ -87,6 +114,10 @@ const App = () => {
         personsService
             .create(personObject)
             .then(response => {
+                setNotificationMessage(`Added ${response.name}`);
+                setTimeout(() => {
+                    setNotificationMessage('');
+                }, 5000);
                 setPersons(persons.concat(response))
                 setNewName('')
                 setNewNumber('')
@@ -130,6 +161,7 @@ const App = () => {
                 handleNumber={handleNumber}
                 addPerson={addPerson}
             />
+            <Notification message={notificationMessage}/>
             <h2>Numbers</h2>
             <Numbers persons={persons} filter={filter} handleDelete={handleDelete}/>
         </div>
