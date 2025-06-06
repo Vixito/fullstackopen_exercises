@@ -62,11 +62,20 @@ const App = () => {
         }
         const personObject = {
             name: newName,
-            number: newNumber
+            number: newNumber,
+            id: persons.length > 0 ? String(Math.max(...persons.map(p => Number(p.id))) + 1) : "1"
         }
-        setPersons(persons.concat(personObject))
-        setNewName('')
-        setNewNumber('')
+        axios
+            .post('http://localhost:3001/persons', personObject)
+            .then(response => {
+                console.log('Person added:', response.data);
+                setPersons(persons.concat(personObject))
+                setNewName('')
+                setNewNumber('')
+            })
+            .catch(error => {
+                console.error('Error adding person:', error);
+            });
     }
     const handleName = (event) => {
         setNewName(event.target.value)
