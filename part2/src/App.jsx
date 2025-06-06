@@ -24,14 +24,18 @@ const Form = ({ newName, newNumber, handleName, handleNumber, addPerson }) => {
     )
 }
 
-const Numbers = ({ persons, filter }) => {
+const Numbers = ({ persons, filter, handleDelete }) => {
     const personsToShow = filter
         ? persons.filter(person => person.name.toLowerCase().includes(filter.toLowerCase()))
         : persons;
     return (
         <ul>
             {personsToShow.map((person) => (
-                <li key={person.name}>{person.name} {person.number}</li>
+                <li key={person.name}>{person.name} {person.number} {' '}
+                    <button onClick={() => handleDelete(person)}>
+                        delete
+                    </button>
+                </li>
             ))}
         </ul>
     )
@@ -87,6 +91,19 @@ const App = () => {
     const handleFilter = (event) => {
         setFilter(event.target.value)
     }
+    const handleDelete = (person) => {
+        if (window.confirm(`Delete ${person.name}?`)) {
+            personsService
+                .remove(person.id)
+                .then(() => {
+                    setPersons(persons.filter(p => p.id !== person.id))
+                })
+                .catch(error => {
+                    console.error('Error deleting person:', error);
+                    alert('Failed to delete person. Please try again.');
+                });
+        }
+    }
 
     return (
         <div>
@@ -100,7 +117,7 @@ const App = () => {
                 addPerson={addPerson}
             />
             <h2>Numbers</h2>
-            <Numbers persons={persons} filter={filter}/>
+            <Numbers persons={persons} filter={filter} handleDelete={handleDelete}/>
         </div>
     )
 }
