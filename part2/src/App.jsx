@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import countriesService from './services/countries'
+import weatherService from './services/weather'
 
 const Filter = ({ filter, handleFilter }) => {
     return (
@@ -9,12 +10,42 @@ const Filter = ({ filter, handleFilter }) => {
     )
 }
 
+const Weather = ({ capital }) => {
+    const [weather, setWeather] = useState(null);
+
+    useEffect(() => {
+        if (!capital) return;
+        weatherService.getWeather(capital)
+            .then(data => {
+                console.log('Weather data:', data);
+                setWeather(data);
+            })
+            .catch((err) => {
+                console.error('Error fetching weather:', err);
+                setWeather(null)
+            });
+    }, [capital]);
+
+    if (!weather) return <div>Loading weather...</div>;
+
+    return (
+        <div>
+            <h3>Weather in {capital}</h3>
+            <div>Temperature: {weather.main.temp} °C</div>
+            <div>Weather: {weather.weather[0].description}</div>
+            <img src={`https://openweathermap.org/img/wn/${weather.weather[0].icon}@2x.png`} alt="weather icon" />
+            <div>Wind: {weather.wind.speed} m/s</div>
+        </div>
+    );
+}
+
 const CountryDetail = ({ country }) => {
     if (!country) return null;
+    const capital = country.capital?.[0];
     return (
         <div>
             <h2>{country.name.common}</h2>
-            <p>Capital: {country.capital?.[0]}</p>
+            <p>Capital: {capital}</p>
             <p>Area: {country.area}</p>
             <ul>
                 {country.languages && Object.values(country.languages).map(language => (
@@ -22,6 +53,7 @@ const CountryDetail = ({ country }) => {
                 ))}
             </ul>
             <img src={country.flags.png} alt={`Flag of ${country.name.common}`} width="100" />
+            {capital && <Weather capital={capital} />}
         </div>
     );
 }
@@ -60,16 +92,17 @@ const App = () => {
             });
     }, [])
 
-    const handleFilter = (event) => {
-        setFilter(event.target.value);
-    }
-
     const filteredCountries = countries.filter(country =>
         country.name.common.toLowerCase().includes(filter.toLowerCase())
     );
 
+    const handleFilter = (event) => {
+        setFilter(event.target.value);
+    }
+
     const handleShowCountry = (country) => {
         setSelectedCountry(country);
+        setFilter(country.name.common);
     }
 
     return (
