@@ -76,6 +76,14 @@ const Notification = ({ message }) => {
     }
 }
 
+const Footer = () => {
+    return (
+        <div className="footer">
+            <p>Created and developed by <strong>Vixis</strong> - 2025</p>
+        </div>
+    )
+}
+
 const App = () => {
     const [persons, setPersons] = useState(null);
     const [newName, setNewName] = useState('');
@@ -200,6 +208,7 @@ const App = () => {
                 ? <div className="loading">Loading...</div> 
                 : <Numbers persons={persons} filter={filter} handleDelete={handleDelete}/>
             }
+            <Footer/>
         </div>
     )
 }

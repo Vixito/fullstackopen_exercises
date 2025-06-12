@@ -175,3 +175,13 @@ ul {
 .deleteButton:hover {
     background-color: #d61010;
 }
+.footer {
+    text-align: center;
+    padding: 0.2rem;
+    background-color: #072D44;
+    color: white;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    font-size: 0.9em;
+}
