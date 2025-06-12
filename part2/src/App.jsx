@@ -4,7 +4,7 @@ import personsService from './services/persons'
 const Filter = ({ filter, handleFilter }) => {
     return (
         <div>
-            filter shown with <input value={filter} onChange={handleFilter}/>
+            Filter shown with<input className="filterInput" value={filter} onChange={handleFilter}/>
         </div>
     )
 }
@@ -12,14 +12,20 @@ const Filter = ({ filter, handleFilter }) => {
 const Form = ({ newName, newNumber, handleName, handleNumber, addPerson }) => {
     return (
         <form onSubmit={addPerson}>
-            <div>
+            <div className="formHeader">
                 <h2>Add a new</h2>
-                name: <input value={newName} onChange={handleName}/><br/>
-                number: <input value={newNumber} onChange={handleNumber}/>
+                <div className="formInputs">
+                    <div className="inputRow">
+                        <label htmlFor="name">Name:</label>
+                        <input className="nameInput" id="name" value={newName} onChange={handleName}/><br/>
+                    </div>
+                    <div className="inputRow">
+                        <label htmlFor="number">Number:</label>
+                        <input className="numberInput" id="number" value={newNumber} onChange={handleNumber}/>
+                    </div>
+                </div>
             </div>
-            <div>
-                <button type="submit">add</button>
-            </div>
+            <button className="addButton" type="submit">Add</button>
         </form>
     )
 }
@@ -30,11 +36,22 @@ const Numbers = ({ persons, filter, handleDelete }) => {
         : persons;
     return (
         <ul>
+            <li className="personRow personHeader">
+                <span>#</span>
+                <span>Name</span>
+                <span>Number</span>
+                <span>Action</span>
+            </li>
             {personsToShow.map((person) => (
-                <li key={person.name}>{person.name} {person.number} {' '}
-                    <button onClick={() => handleDelete(person)}>
-                        delete
-                    </button>
+                <li className="personRow" key={person.name}>
+                    <span className="personId">{person.id}</span>
+                    <span className="personName">{person.name}</span>
+                    <span className="personNumber">{person.number}</span>
+                    <span className="personActions">
+                        <button className="deleteButton" onClick={() => handleDelete(person)}>
+                            Delete
+                        </button>
+                    </span>
                 </li>
             ))}
         </ul>
@@ -167,7 +184,10 @@ const App = () => {
     return (
         <div>
             <h1>Phonebook</h1>
-            <Filter filter={filter} handleFilter={handleFilter}/>
+            <div className="nav">
+                <Filter filter={filter} handleFilter={handleFilter}/>
+                <Notification message={notificationMessage}/>
+            </div>
             <Form
                 newName={newName}
                 newNumber={newNumber}
@@ -175,10 +195,9 @@ const App = () => {
                 handleNumber={handleNumber}
                 addPerson={addPerson}
             />
-            <Notification message={notificationMessage}/>
-            <h2>Numbers</h2>
+            <h2>List</h2>
             { !persons 
-                ? <div>Loading...</div> 
+                ? <div className="loading">Loading...</div> 
                 : <Numbers persons={persons} filter={filter} handleDelete={handleDelete}/>
             }
         </div>
