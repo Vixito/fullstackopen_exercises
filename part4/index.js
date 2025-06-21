@@ -14,7 +14,7 @@ const blogSchema = new mongoose.Schema({
 const Blog = mongoose.model('Blog', blogSchema)
 
 const mongoUrl = process.env.MONGODB_URI
-mongoose.connect(mongoUrl, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(mongoUrl)
 
 app.use(cors())
 app.use(express.json())
