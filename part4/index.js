@@ -1,5 +1,5 @@
 require('dotenv').config()
-const app = express()
+const app = require('./app')
 const mongoose = require('mongoose')
 
 const mongoUrl = process.env.MONGODB_URI
