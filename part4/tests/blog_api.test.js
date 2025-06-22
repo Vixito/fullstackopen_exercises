@@ -23,6 +23,13 @@ test('blogs are returned as json and correct amount', async () => {
   expect(response.body).toHaveLength(2)
 })
 
+test('unique identifier property of blog posts is named id', async () => {
+  const response = await api.get('/api/blogs')
+  const blog = response.body[0]
+  expect(blog.id).toBeDefined()
+  expect(blog._id).toBeUndefined()
+})
+
 afterAll(async () => {
   await mongoose.connection.close()
 })
