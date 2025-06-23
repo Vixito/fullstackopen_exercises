@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken')
 const blogsRouter = require('express').Router()
 const Blog = require('../models/blog')
-const userExtractor = require('../middleware/userExtractor')
+const User = require('../models/user')
 
 // Get all blogs with Populate
 blogsRouter.get('/', async (request, response) => {
@@ -10,19 +10,17 @@ blogsRouter.get('/', async (request, response) => {
 })
 
 // Create a new blog
-blogsRouter.post('/', userExtractor, async (request, response) => {
-  const { title, author, url, likes } = request.body
-  const user = request.user
+blogsRouter.post('/', async (request, response) => {
+  const decodedToken = jwt.verify(request.token, process.env.SECRET)
 
-  if (!user) {
-    return response.status(401).json({ error: 'unauthenticated user' })
+  if (!decodedToken.id) {
+    return response.status(401).json({ error: 'token inválido' })
   }
 
+  const user = await User.findById(decodedToken.id)
+
   const blog = new Blog({
-    title,
-    author,
-    url,
-    likes: likes || 0,
+    ...request.body,
     user: user._id
   })
 
