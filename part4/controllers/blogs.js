@@ -1,7 +1,7 @@
+const jwt = require('jsonwebtoken')
 const blogsRouter = require('express').Router()
 const Blog = require('../models/blog')
-const user = require('../models/user')
-const User = require('../models/user')
+const userExtractor = require('../middleware/userExtractor')
 
 // Get all blogs with Populate
 blogsRouter.get('/', async (request, response) => {
@@ -10,29 +10,26 @@ blogsRouter.get('/', async (request, response) => {
 })
 
 // Create a new blog
-blogsRouter.post('/', async (request, response) => {
-  const { title, url } = request.body
+blogsRouter.post('/', userExtractor, async (request, response) => {
+  const { title, author, url, likes } = request.body
+  const user = request.user
 
-  if (!title || !url) {
-    return response.status(400).end()
+  if (!user) {
+    return response.status(401).json({ error: 'unauthenticated user' })
   }
 
-  // Searches for the first user in the database
-  const user = await User.findOne({})
-
   const blog = new Blog({
-    title: body.title,
-    author: body.author,
-    url: body.url,
-    likes: body.likes || 0,
+    title,
+    author,
+    url,
+    likes: likes || 0,
     user: user._id
   })
 
   const savedBlog = await blog.save()
-
-  // Adds the blog to the user's blog list
   user.blogs = user.blogs.concat(savedBlog._id)
   await user.save()
+
   response.status(201).json(savedBlog)
 })
 
