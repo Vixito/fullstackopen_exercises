@@ -11,13 +11,7 @@ blogsRouter.get('/', async (request, response) => {
 
 // Create a new blog
 blogsRouter.post('/', async (request, response) => {
-  const decodedToken = jwt.verify(request.token, process.env.SECRET)
-
-  if (!decodedToken.id) {
-    return response.status(401).json({ error: 'token inválido' })
-  }
-
-  const user = await User.findById(decodedToken.id)
+  const user = request.user
 
   const blog = new Blog({
     ...request.body,
@@ -33,19 +27,15 @@ blogsRouter.post('/', async (request, response) => {
 
 // Delete a blog
 blogsRouter.delete('/:id', async (request, response) => {
-  const decodedToken = jwt.verify(request.token, process.env.SECRET)
+  const user = request.user
   const blog = await Blog.findById(request.params.id)
-  
+
   if (!blog) {
     return response.status(404).json({ error: 'blog not found' })
   }
 
-  if (blog.user.toString() !== decodedToken.id.toString()) {
+  if (blog.user.toString() !== user._id.toString()) {
     return response.status(403).json({ error: 'not authorized to remove this blog' })
-  }
-
-  if (!decodedToken.id) {
-    return response.status(401).json({ error: 'invalid token' })
   }
 
   await Blog.findByIdAndDelete(request.params.id)
