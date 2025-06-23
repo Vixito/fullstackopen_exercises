@@ -2,6 +2,8 @@ const jwt = require('jsonwebtoken')
 const blogsRouter = require('express').Router()
 const Blog = require('../models/blog')
 const User = require('../models/user')
+const tokenExtractor = require('../middleware/tokenExtractor')
+const userExtractor = require('../middleware/userExtractor')
 
 // Get all blogs with Populate
 blogsRouter.get('/', async (request, response) => {
@@ -10,8 +12,13 @@ blogsRouter.get('/', async (request, response) => {
 })
 
 // Create a new blog
-blogsRouter.post('/', async (request, response) => {
+blogsRouter.post('/', tokenExtractor, userExtractor, async (request, response) => {
   const user = request.user
+  const { title, url } = request.body
+
+  if (!title || !url) {
+    return response.status(400).json({ error: 'title and url are required' })
+  }
 
   const blog = new Blog({
     ...request.body,
@@ -26,7 +33,7 @@ blogsRouter.post('/', async (request, response) => {
 })
 
 // Delete a blog
-blogsRouter.delete('/:id', async (request, response) => {
+blogsRouter.delete('/:id', tokenExtractor, userExtractor, async (request, response) => {
   const user = request.user
   const blog = await Blog.findById(request.params.id)
 
@@ -43,7 +50,7 @@ blogsRouter.delete('/:id', async (request, response) => {
 })
 
 // Update a blog
-blogsRouter.put('/:id', async (request, response) => {
+blogsRouter.put('/:id', tokenExtractor, userExtractor, async (request, response) => {
   const { title, author, url, likes } = request.body
 
   const updatedBlog = await Blog.findByIdAndUpdate(
