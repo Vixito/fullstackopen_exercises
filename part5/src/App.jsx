@@ -3,12 +3,29 @@ import Blog from './components/Blog'
 import blogService from './services/blogs'
 import loginService from './services/login'
 
+// Notificación reutilizable
+const Notification = ({ message, type }) => {
+  if (!message) return null
+  const style = {
+    color: type === 'success' ? 'green' : 'red',
+    background: '#f4f4f4',
+    fontSize: 20,
+    border: `2px solid ${type === 'success' ? 'green' : 'red'}`,
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 20,
+    textAlign: 'center'
+  }
+  return <div style={style}>{message}</div>
+}
+
 const App = () => {
   const [blogs, setBlogs] = useState([])
   const [user, setUser] = useState(null)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [errorMessage, setErrorMessage] = useState(null)
+  const [successMessage, setSuccessMessage] = useState(null)
   const [newTitle, setNewTitle] = useState('')
   const [newAuthor, setNewAuthor] = useState('')
   const [newUrl, setNewUrl] = useState('')
@@ -39,9 +56,11 @@ const App = () => {
       setUsername('')
       setPassword('')
       blogService.setToken && blogService.setToken(userData.token)
+      setSuccessMessage('Login successful!')
+      setTimeout(() => setSuccessMessage(null), 4000)
     } catch (error) {
       setErrorMessage('Wrong credentials')
-      setTimeout(() => setErrorMessage(null), 5000)
+      setTimeout(() => setErrorMessage(null), 4000)
     }
   }
 
@@ -51,6 +70,8 @@ const App = () => {
     setUser(null)
     // Si uso token, se podría limpiar aquí también
     blogService.setToken && blogService.setToken(null)
+    setSuccessMessage('Logged out')
+    setTimeout(() => setSuccessMessage(null), 4000)
   }
 
   const handleAddBlog = async (event) => {
@@ -66,9 +87,11 @@ const App = () => {
       setNewTitle('')
       setNewAuthor('')
       setNewUrl('')
+      setSuccessMessage(`A new blog "${returnedBlog.title}" by ${returnedBlog.author} added!`)
+      setTimeout(() => setSuccessMessage(null), 4000)
     } catch (error) {
       setErrorMessage('Error adding blog')
-      setTimeout(() => setErrorMessage(null), 5000)
+      setTimeout(() => setErrorMessage(null), 4000)
     }
   }
 
@@ -76,7 +99,8 @@ const App = () => {
     return (
       <div>
         <h2>Log in to application</h2>
-        {errorMessage && <div style={{ color: 'red' }}>{errorMessage}</div>}
+        <Notification message={errorMessage} type="error" />
+        <Notification message={successMessage} type="success" />
         <form onSubmit={handleLogin}>
           <div>
             username
@@ -105,6 +129,8 @@ const App = () => {
   return (
     <div>
       <h2>blogs</h2>
+      <Notification message={errorMessage} type="error" />
+      <Notification message={successMessage} type="success" />
       <div>
         {user.name} logged in
         <button onClick={handleLogout}>logout</button>
