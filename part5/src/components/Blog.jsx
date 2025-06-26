@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-const Blog = ({ blog, handleLike }) => {
+const Blog = ({ blog, handleLike, handleRemove, currentUser }) => {
   const [showDetails, setShowDetails] = useState(false)
 
   const blogStyle = {
@@ -19,6 +19,18 @@ const Blog = ({ blog, handleLike }) => {
     })
   }
 
+  const removeBlog = () => {
+    if (window.confirm(`Remove blog "${blog.title}" by ${blog.author}?`)) {
+      handleRemove(blog)
+    }
+  }
+
+  // El usuario puede estar como objeto o id, por eso la comparación
+  const isOwner = blog.user && (
+    blog.user.username === currentUser.username ||
+    blog.user === currentUser.id
+  )
+
   return (
     <div style={blogStyle} className="blog">
       <div>
@@ -35,6 +47,11 @@ const Blog = ({ blog, handleLike }) => {
             <button onClick={likeBlog}>like</button>
           </div>
           <div>{blog.user && blog.user.name}</div>
+          {isOwner && (
+            <button onClick={removeBlog} style={{ background: 'red', color: 'white' }}>
+              remove
+            </button>
+          )}
         </div>
       )}
     </div>

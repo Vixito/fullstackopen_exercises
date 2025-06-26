@@ -105,6 +105,18 @@ const App = () => {
     }
   }
 
+  const handleRemove = async (blogToRemove) => {
+    try {
+      await blogService.remove(blogToRemove.id)
+      setBlogs(blogs.filter(b => b.id !== blogToRemove.id))
+      setSuccessMessage(`Blog "${blogToRemove.title}" removed`)
+      setTimeout(() => setSuccessMessage(null), 4000)
+    } catch (error) {
+      setErrorMessage('Error removing blog')
+      setTimeout(() => setErrorMessage(null), 4000)
+    }
+  }
+
   if (user === null) {
     return (
       <div>
@@ -152,7 +164,13 @@ const App = () => {
         .slice() // copia para no mutar el estado original
         .sort((a, b) => b.likes - a.likes)
         .map(blog =>
-          <Blog key={blog.id} blog={blog} handleLike={handleLike} />
+          <Blog
+            key={blog.id}
+            blog={blog}
+            handleLike={handleLike}
+            handleRemove={handleRemove}
+            currentUser={user}
+          />
       )}
     </div>
   )
