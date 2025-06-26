@@ -88,6 +88,23 @@ const App = () => {
     }
   }
 
+  const handleLike = async (updatedBlog) => {
+    try {
+      const blogToUpdate = {
+        user: updatedBlog.user.id || updatedBlog.user,
+        likes: updatedBlog.likes,
+        author: updatedBlog.author,
+        title: updatedBlog.title,
+        url: updatedBlog.url
+      }
+      const returnedBlog = await blogService.update(updatedBlog.id, blogToUpdate)
+      setBlogs(blogs.map(b => b.id === updatedBlog.id ? { ...returnedBlog, user: updatedBlog.user } : b))
+    } catch (error) {
+      setErrorMessage('Error updating likes')
+      setTimeout(() => setErrorMessage(null), 4000)
+    }
+  }
+
   if (user === null) {
     return (
       <div>
@@ -132,7 +149,7 @@ const App = () => {
         <BlogForm createBlog={addBlog} />
       </Togglable>
       {blogs.map(blog =>
-        <Blog key={blog.id} blog={blog} />
+        <Blog key={blog.id} blog={blog} handleLike={handleLike} />
       )}
     </div>
   )
