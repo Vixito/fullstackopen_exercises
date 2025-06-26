@@ -91,14 +91,14 @@ const App = () => {
   const handleLike = async (updatedBlog) => {
     try {
       const blogToUpdate = {
-        user: updatedBlog.user.id || updatedBlog.user,
+        user: updatedBlog.user.id || updatedBlog.user, // Ya lo tenía hecho
         likes: updatedBlog.likes,
         author: updatedBlog.author,
         title: updatedBlog.title,
         url: updatedBlog.url
       }
       const returnedBlog = await blogService.update(updatedBlog.id, blogToUpdate)
-      setBlogs(blogs.map(b => b.id === updatedBlog.id ? { ...returnedBlog, user: updatedBlog.user } : b))
+      setBlogs(blogs.map(b => b.id === updatedBlog.id ? { ...returnedBlog, user: updatedBlog.user } : b)) // Ya lo tenía hecho
     } catch (error) {
       setErrorMessage('Error updating likes')
       setTimeout(() => setErrorMessage(null), 4000)
