@@ -52,7 +52,14 @@ describe('Blog app', () => {
       await page.getByLabel('author').fill('Author E2E');
       await page.getByLabel('url').fill('http://e2e.com');
       await page.getByRole('button', { name: 'create' }).click();
-      await expect(page.getByText('Blog E2E Author E2E')).toBeVisible();
+      await expect(page.getByText('Blog E2E Author E2E').first()).toBeVisible();
+    });
+
+    test('a blog can be liked', async ({ page }) => {
+      await page.getByRole('button', { name: 'view' }).first().click();
+      const likeButton = page.getByRole('button', { name: 'like' });
+      await likeButton.click();
+      await expect(page.getByText(/likes 1/)).toBeVisible();
     });
   });
-})
+});
