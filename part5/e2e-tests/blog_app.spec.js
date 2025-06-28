@@ -38,4 +38,21 @@ describe('Blog app', () => {
       await expect(page.getByText(/wrong credentials/i)).toBeVisible();
     });
   });
+
+  describe('When logged in', () => {
+    beforeEach(async ({ page }) => {
+      await page.locator('input[name="Username"]').fill('testuser');
+      await page.locator('input[name="Password"]').fill('testpass');
+      await page.getByRole('button', { name: 'login' }).click();
+    });
+
+    test('a new blog can be created', async ({ page }) => {
+      await page.getByRole('button', { name: 'create new blog' }).click();
+      await page.getByLabel('title').fill('Blog E2E');
+      await page.getByLabel('author').fill('Author E2E');
+      await page.getByLabel('url').fill('http://e2e.com');
+      await page.getByRole('button', { name: 'create' }).click();
+      await expect(page.getByText('Blog E2E Author E2E')).toBeVisible();
+    });
+  });
 })
