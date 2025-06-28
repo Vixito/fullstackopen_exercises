@@ -1,3 +1,9 @@
+if (process.env.NODE_ENV === 'test') {
+  require('dotenv').config({ path: '.env.test' })
+} else {
+  require('dotenv').config()
+}
+
 const mongoose = require('mongoose')
 const express = require('express')
 const app = express()
