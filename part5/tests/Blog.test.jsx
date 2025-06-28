@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import Blog from '../src/components/Blog'
 
 const blog = {
@@ -16,4 +16,12 @@ test('renders title and author, but not url or likes by default', () => {
   expect(element).toBeDefined()
   expect(screen.queryByText('http://test.com')).toBeNull()
   expect(screen.queryByText(/likes/)).toBeNull()
+})
+
+test('shows url and likes when view button is clicked', () => {
+  render(<Blog blog={blog} currentUser={blog.user} handleLike={() => {}} handleRemove={() => {}} />)
+  const button = screen.getByText('view')
+  fireEvent.click(button)
+  expect(screen.getByText('http://test.com')).toBeDefined()
+  expect(screen.getByText(/likes 5/)).toBeDefined()
 })
