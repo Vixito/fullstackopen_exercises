@@ -82,7 +82,7 @@ describe('Blog app', () => {
       await blogContainer.getByRole('button', { name: 'remove' }).click();
 
       // Verificar que el blog ya no está en la lista
-      await expect(page.getByText('Blog to delete Author Delete')).not.toBeVisible();
+      await expect(page.getByText(/^Blog to delete Author Delete$/)).not.toBeVisible();
     });
 
     test('only the creator sees the remove button', async ({ page, request }) => {
@@ -115,6 +115,48 @@ describe('Blog app', () => {
 
       // Verificar que el botón "remove" NO está visible
       await expect(blogContainer.getByRole('button', { name: 'remove' })).toHaveCount(0);
+    });
+
+    test('blogs are ordered by likes in descending order', async ({ page, request }) => {
+      // Crear varios blogs con diferentes likes usando la API
+      const tokenResponse = await request.post('http://localhost:3001/api/login', {
+        data: { username: 'testuser', password: 'testpass' }
+      });
+      const token = tokenResponse.ok() ? (await tokenResponse.json()).token : null;
+
+      const blogs = [
+        { title: 'Most liked', author: 'A', url: 'http://a.com', likes: 10 },
+        { title: 'Second liked', author: 'B', url: 'http://b.com', likes: 7 },
+        { title: 'Least liked', author: 'C', url: 'http://c.com', likes: 2 }
+      ];
+
+      for (const blog of blogs) {
+        await request.post('http://localhost:3001/api/blogs', {
+          data: blog,
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      }
+
+      await page.reload();
+
+      // Expandir todos los blogs para ver los likes
+      const viewButtons = await page.getByRole('button', { name: 'view' }).all();
+      for (const btn of viewButtons) {
+        await btn.click();
+      }
+
+      // Obtener los textos de los blogs en pantalla
+      const blogElements = await page.locator('.blog').all();
+      const likes = [];
+      for (const blog of blogElements) {
+        const text = await blog.textContent();
+        const match = text.match(/likes (\d+)/);
+        if (match) likes.push(Number(match[1]));
+      }
+
+      // Comprobar que están ordenados de mayor a menor
+      const sorted = [...likes].sort((a, b) => b - a);
+      expect(likes).toEqual(sorted);
     });
   });
 });
