@@ -61,5 +61,28 @@ describe('Blog app', () => {
       await likeButton.click();
       await expect(page.getByText(/likes 1/)).toBeVisible();
     });
+
+    test('the creator can delete their blog', async ({ page }) => {
+      // Crear un blog
+      await page.getByRole('button', { name: 'create new blog' }).click();
+      await page.getByLabel('title').fill('Blog to delete');
+      await page.getByLabel('author').fill('Author Delete');
+      await page.getByLabel('url').fill('http://delete.com');
+      await page.getByRole('button', { name: 'create' }).click();
+
+      // Buscar el blog recién creado y mostrar sus detalles
+      const blogEntry = page.getByText('Blog to delete Author Delete').first();
+      // Subir al contenedor del blog y buscar el botón "view"
+      const blogContainer = blogEntry.locator('..');
+      await blogContainer.getByRole('button', { name: 'view' }).click();
+
+      // Esperar a que el botón "remove" esté visible y hacer clic
+      await expect(blogContainer.getByRole('button', { name: 'remove' })).toBeVisible();
+      page.once('dialog', dialog => dialog.accept());
+      await blogContainer.getByRole('button', { name: 'remove' }).click();
+
+      // Verificar que el blog ya no está en la lista
+      await expect(page.getByText('Blog to delete Author Delete')).not.toBeVisible();
+    });
   });
 });
