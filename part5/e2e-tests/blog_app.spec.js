@@ -84,5 +84,37 @@ describe('Blog app', () => {
       // Verificar que el blog ya no está en la lista
       await expect(page.getByText('Blog to delete Author Delete')).not.toBeVisible();
     });
+
+    test('only the creator sees the remove button', async ({ page, request }) => {
+      // Crear un blog como testuser
+      await page.getByRole('button', { name: 'create new blog' }).click();
+      await page.getByLabel('title').fill('Blog private');
+      await page.getByLabel('author').fill('Author Private');
+      await page.getByLabel('url').fill('http://private.com');
+      await page.getByRole('button', { name: 'create' }).click();
+
+      // Cerrar sesión
+      await page.getByRole('button', { name: /logout/i }).click();
+
+      // Crear y loguear otro usuario
+      await request.post('http://localhost:3001/api/users', {
+        data: {
+          username: 'otheruser',
+          name: 'Other User',
+          password: 'otherpass'
+        }
+      });
+      await page.locator('input[name="Username"]').fill('otheruser');
+      await page.locator('input[name="Password"]').fill('otherpass');
+      await page.getByRole('button', { name: 'login' }).click();
+
+      // Buscar el blog y mostrar detalles
+      const blogEntry = page.getByText('Blog private Author Private').first();
+      const blogContainer = blogEntry.locator('..');
+      await blogContainer.getByRole('button', { name: 'view' }).click();
+
+      // Verificar que el botón "remove" NO está visible
+      await expect(blogContainer.getByRole('button', { name: 'remove' })).toHaveCount(0);
+    });
   });
 });
