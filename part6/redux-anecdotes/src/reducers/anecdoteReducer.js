@@ -28,7 +28,7 @@ export const initializeAnecdotes = () => {
     const anecdotes = await anecdoteService.getAll()
     dispatch(setAnecdotes(anecdotes))
   }
-}
+} // Ya lo tengo hecho
 
 export const createAnecdote = (content) => {
   return async dispatch => {

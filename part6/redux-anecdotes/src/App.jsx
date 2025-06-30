@@ -11,7 +11,7 @@ const App = () => {
 
   useEffect(() => {
     dispatch(initializeAnecdotes())
-  }, [dispatch])
+  }, [dispatch]) // Ya lo tengo hecho
 
   return (
     <div>
