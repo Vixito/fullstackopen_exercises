@@ -35,6 +35,6 @@ export const createAnecdote = (content) => {
     const newAnecdote = await anecdoteService.createNew(content)
     dispatch(appendAnecdote(newAnecdote))
   }
-}
+} // Ya lo tengo hecho
 
 export default anecdoteSlice.reducer
