@@ -9,11 +9,13 @@ export const useField = (type) => {
 
   const reset = () => setValue('')
 
-  // No incluyo reset en el spread para evitar warnings en el input
+  // Devuelve las props para el input y la función reset por separado
   return {
-    type,
-    value,
-    onChange,
+    inputProps: {
+      type,
+      value,
+      onChange
+    },
     reset
   }
 }
