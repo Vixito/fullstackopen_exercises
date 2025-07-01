@@ -9,8 +9,17 @@ const AnecdoteForm = () => {
   const newAnecdoteMutation = useMutation({
     mutationFn: createAnecdote,
     onSuccess: (newAnecdote) => {
-      // Actualiza la caché para mostrar la nueva anécdota
-      queryClient.setQueryData(['anecdotes'], (old) => old.concat(newAnecdote))
+      queryClient.setQueryData(['anecdotes'], (oldAnecdotes) => oldAnecdotes.concat(newAnecdote))
+      dispatchNotification({ type: 'SHOW', payload: `you created '${newAnecdote.content}'` })
+      setTimeout(() => {
+        dispatchNotification({ type: 'HIDE' })
+      }, 5000)
+    },
+    onError: (error) => {
+      dispatchNotification({ type: 'SHOW', payload: 'anecdote content must be at least 5 characters' })
+      setTimeout(() => {
+        dispatchNotification({ type: 'HIDE' })
+      }, 5000)
     }
   })
 
@@ -19,10 +28,6 @@ const AnecdoteForm = () => {
     const content = event.target.anecdote.value
     event.target.anecdote.value = ''
     newAnecdoteMutation.mutate(content)
-    dispatchNotification({ type: 'SHOW', payload: `you created '${content}'` })
-    setTimeout(() => {
-      dispatchNotification({ type: 'HIDE' })
-    }, 5000)
   }
 
   return (
