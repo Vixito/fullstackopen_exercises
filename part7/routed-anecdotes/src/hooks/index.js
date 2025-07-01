@@ -7,9 +7,13 @@ export const useField = (type) => {
     setValue(event.target.value)
   }
 
+  const reset = () => setValue('')
+
+  // No incluyo reset en el spread para evitar warnings en el input
   return {
     type,
     value,
-    onChange
+    onChange,
+    reset
   }
 }
