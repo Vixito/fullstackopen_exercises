@@ -1,10 +1,11 @@
 import { configureStore } from '@reduxjs/toolkit';
 import notificationReducer from './reducers/notificationSlice';
+import blogReducer from './reducers/blogSlice';
 
 const store = configureStore({
   reducer: {
     notification: notificationReducer,
-    // aquí se agregarán los demás reducers
+    blogs: blogReducer,
   },
 });
 

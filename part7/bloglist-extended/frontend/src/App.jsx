@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useDispatch } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import Blog from './components/Blog';
 import blogService from './services/blogs';
 import loginService from './services/login';
@@ -7,20 +7,21 @@ import BlogForm from './components/BlogForm';
 import Togglable from './components/Togglable';
 import { showNotification } from './reducers/notificationSlice';
 import Notification from './components/Notification';
+import { initializeBlogs, createBlog } from './reducers/blogSlice';
 
 // App principal
 const App = () => {
-  const [blogs, setBlogs] = useState([]);
   const [user, setUser] = useState(null);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const blogFormRef = useRef();
   const dispatch = useDispatch();
+  const blogs = useSelector((state) => state.blogs);
 
   // Al iniciar, obtener todos los blogs
   useEffect(() => {
-    blogService.getAll().then((blogs) => setBlogs(blogs));
-  }, []);
+    dispatch(initializeBlogs());
+  }, [dispatch]);
 
   // Revisar si hay usuario guardado en localStorage al iniciar
   useEffect(() => {
@@ -60,11 +61,10 @@ const App = () => {
   // Nueva función para crear un blog, llamada por BlogForm
   const addBlog = async (blogObject) => {
     try {
-      const returnedBlog = await blogService.create(blogObject);
-      setBlogs(blogs.concat(returnedBlog));
+      await dispatch(createBlog(blogObject));
       dispatch(
         showNotification(
-          `A new blog "${returnedBlog.title}" by ${returnedBlog.author} added!`,
+          `A new blog "${blogObject.title}" by ${blogObject.author} added!`,
           'success'
         )
       );
@@ -144,7 +144,7 @@ const App = () => {
         <BlogForm createBlog={addBlog} />
       </Togglable>
       {blogs
-        .slice() // copia para no mutar el estado original
+        .slice()
         .sort((a, b) => b.likes - a.likes)
         .map((blog) => (
           <Blog
