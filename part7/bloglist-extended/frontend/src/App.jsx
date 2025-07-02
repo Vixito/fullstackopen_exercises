@@ -7,7 +7,7 @@ import BlogForm from './components/BlogForm';
 import Togglable from './components/Togglable';
 import { showNotification } from './reducers/notificationSlice';
 import Notification from './components/Notification';
-import { initializeBlogs, createBlog } from './reducers/blogSlice';
+import { initializeBlogs, createBlog, likeBlog, deleteBlog } from './reducers/blogSlice';
 
 // App principal
 const App = () => {
@@ -76,19 +76,7 @@ const App = () => {
 
   const handleLike = async (updatedBlog) => {
     try {
-      const blogToUpdate = {
-        user: updatedBlog.user.id || updatedBlog.user,
-        likes: updatedBlog.likes,
-        author: updatedBlog.author,
-        title: updatedBlog.title,
-        url: updatedBlog.url,
-      };
-      const returnedBlog = await blogService.update(updatedBlog.id, blogToUpdate);
-      setBlogs(
-        blogs.map((b) =>
-          b.id === updatedBlog.id ? { ...returnedBlog, user: updatedBlog.user } : b
-        )
-      );
+      await dispatch(likeBlog(updatedBlog));
     } catch (error) {
       dispatch(showNotification('Error updating likes', 'error'));
     }
@@ -96,8 +84,7 @@ const App = () => {
 
   const handleRemove = async (blogToRemove) => {
     try {
-      await blogService.remove(blogToRemove.id);
-      setBlogs(blogs.filter((b) => b.id !== blogToRemove.id));
+      await dispatch(deleteBlog(blogToRemove.id));
       dispatch(showNotification(`Blog "${blogToRemove.title}" removed`, 'success'));
     } catch (error) {
       dispatch(showNotification('Error removing blog', 'error'));

@@ -39,4 +39,25 @@ export const createBlog = (blogObject) => {
   };
 };
 
+export const likeBlog = (blogToUpdate) => {
+  return async (dispatch) => {
+    const blogObject = {
+      user: blogToUpdate.user.id || blogToUpdate.user,
+      likes: blogToUpdate.likes,
+      author: blogToUpdate.author,
+      title: blogToUpdate.title,
+      url: blogToUpdate.url,
+    };
+    const updatedBlog = await blogService.update(blogToUpdate.id, blogObject);
+    dispatch(updateBlog({ ...updatedBlog, user: blogToUpdate.user }));
+  };
+};
+
+export const deleteBlog = (id) => {
+  return async (dispatch) => {
+    await blogService.remove(id);
+    dispatch(removeBlog(id));
+  };
+};
+
 export default blogSlice.reducer;
