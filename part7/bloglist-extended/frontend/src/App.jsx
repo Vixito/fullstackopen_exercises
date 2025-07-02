@@ -1,35 +1,23 @@
 import { useState, useEffect, useRef } from 'react';
+import { useDispatch } from 'react-redux';
 import Blog from './components/Blog';
 import blogService from './services/blogs';
 import loginService from './services/login';
 import BlogForm from './components/BlogForm';
 import Togglable from './components/Togglable';
+import { showNotification } from './reducers/notificationSlice';
+import Notification from './components/Notification';
 
-// Notificación reutilizable
-const Notification = ({ message, type }) => {
-  if (!message) return null;
-  const style = {
-    color: type === 'success' ? 'green' : 'red',
-    background: '#f4f4f4',
-    fontSize: 20,
-    border: `2px solid ${type === 'success' ? 'green' : 'red'}`,
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 20,
-    textAlign: 'center',
-  };
-  return <div style={style}>{message}</div>;
-};
-
+// App principal
 const App = () => {
   const [blogs, setBlogs] = useState([]);
   const [user, setUser] = useState(null);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [errorMessage, setErrorMessage] = useState(null);
-  const [successMessage, setSuccessMessage] = useState(null);
   const blogFormRef = useRef();
+  const dispatch = useDispatch();
 
+  // Al iniciar, obtener todos los blogs
   useEffect(() => {
     blogService.getAll().then((blogs) => setBlogs(blogs));
   }, []);
@@ -54,11 +42,9 @@ const App = () => {
       setUsername('');
       setPassword('');
       blogService.setToken && blogService.setToken(userData.token);
-      setSuccessMessage('Login successful!');
-      setTimeout(() => setSuccessMessage(null), 4000);
+      dispatch(showNotification('Login successful!', 'success'));
     } catch (error) {
-      setErrorMessage('Wrong credentials');
-      setTimeout(() => setErrorMessage(null), 4000);
+      dispatch(showNotification('Wrong credentials', 'error'));
     }
   };
 
@@ -68,8 +54,7 @@ const App = () => {
     setUser(null);
     // Si uso token, se podría limpiar aquí también
     blogService.setToken && blogService.setToken(null);
-    setSuccessMessage('Logged out');
-    setTimeout(() => setSuccessMessage(null), 4000);
+    dispatch(showNotification('Logged out', 'success'));
   };
 
   // Nueva función para crear un blog, llamada por BlogForm
@@ -77,19 +62,22 @@ const App = () => {
     try {
       const returnedBlog = await blogService.create(blogObject);
       setBlogs(blogs.concat(returnedBlog));
-      setSuccessMessage(`A new blog "${returnedBlog.title}" by ${returnedBlog.author} added!`);
-      setTimeout(() => setSuccessMessage(null), 4000);
+      dispatch(
+        showNotification(
+          `A new blog "${returnedBlog.title}" by ${returnedBlog.author} added!`,
+          'success'
+        )
+      );
       blogFormRef.current.toggleVisibility(); // Oculta el formulario después de crear el blog
     } catch (error) {
-      setErrorMessage('Error adding blog');
-      setTimeout(() => setErrorMessage(null), 4000);
+      dispatch(showNotification('Error adding blog', 'error'));
     }
   };
 
   const handleLike = async (updatedBlog) => {
     try {
       const blogToUpdate = {
-        user: updatedBlog.user.id || updatedBlog.user, // Ya lo tenía hecho
+        user: updatedBlog.user.id || updatedBlog.user,
         likes: updatedBlog.likes,
         author: updatedBlog.author,
         title: updatedBlog.title,
@@ -100,10 +88,9 @@ const App = () => {
         blogs.map((b) =>
           b.id === updatedBlog.id ? { ...returnedBlog, user: updatedBlog.user } : b
         )
-      ); // Ya lo tenía hecho
+      );
     } catch (error) {
-      setErrorMessage('Error updating likes');
-      setTimeout(() => setErrorMessage(null), 4000);
+      dispatch(showNotification('Error updating likes', 'error'));
     }
   };
 
@@ -111,11 +98,9 @@ const App = () => {
     try {
       await blogService.remove(blogToRemove.id);
       setBlogs(blogs.filter((b) => b.id !== blogToRemove.id));
-      setSuccessMessage(`Blog "${blogToRemove.title}" removed`);
-      setTimeout(() => setSuccessMessage(null), 4000);
+      dispatch(showNotification(`Blog "${blogToRemove.title}" removed`, 'success'));
     } catch (error) {
-      setErrorMessage('Error removing blog');
-      setTimeout(() => setErrorMessage(null), 4000);
+      dispatch(showNotification('Error removing blog', 'error'));
     }
   };
 
@@ -123,8 +108,6 @@ const App = () => {
     return (
       <div>
         <h2>Log in to application</h2>
-        <Notification message={errorMessage} type="error" />
-        <Notification message={successMessage} type="success" />
         <form onSubmit={handleLogin}>
           <div>
             username
@@ -153,8 +136,6 @@ const App = () => {
   return (
     <div>
       <h2>blogs</h2>
-      <Notification message={errorMessage} type="error" />
-      <Notification message={successMessage} type="success" />
       <div>
         {user.name} logged in
         <button onClick={handleLogout}>logout</button>
@@ -174,6 +155,7 @@ const App = () => {
             currentUser={user}
           />
         ))}
+      <Notification />
     </div>
   );
 };
