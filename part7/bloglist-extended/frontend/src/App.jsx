@@ -126,21 +126,19 @@ const App = () => {
 
   return (
     <div>
-      <h2>blogs</h2>
-      <Notification />
-
-      {/* Navigation */}
-      <div style={{ marginBottom: '20px' }}>
+      <div style={{ padding: '10px', backgroundColor: '#f0f0f0', marginBottom: '20px' }}>
         <Link to="/" style={{ marginRight: '10px' }}>
           blogs
         </Link>
-        <Link to="/users">users</Link>
+        <Link to="/users" style={{ marginRight: '10px' }}>users</Link>
+        <span style={{ marginLeft: '10px' }}>
+          {user.name} logged in
+          <button onClick={handleLogout} style={{ marginLeft: '5px' }}>logout</button>
+        </span>
       </div>
-
-      <div>
-        {user.name} logged in
-        <button onClick={handleLogout}>logout</button>
-      </div>
+      
+      <h2>blog app</h2>
+      <Notification />
 
       <Routes>
         <Route
