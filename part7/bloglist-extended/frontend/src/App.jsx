@@ -112,7 +112,9 @@ const App = () => {
               className="form-input"
             />
           </div>
-          <button type="submit" className="btn btn-primary">login</button>
+          <button type="submit" className="btn btn-primary">
+            login
+          </button>
         </form>
       </div>
     );

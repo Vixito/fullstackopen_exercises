@@ -35,7 +35,9 @@ const Blog = ({ blog, handleLike, handleRemove, currentUser }) => {
           <div>{blog.url}</div>
           <div>
             likes {blog.likes}
-            <button onClick={likeBlog} className="btn btn-primary" style={{ marginLeft: '0.5rem' }}>like</button>
+            <button onClick={likeBlog} className="btn btn-primary" style={{ marginLeft: '0.5rem' }}>
+              like
+            </button>
           </div>
           <div>{blog.user && blog.user.name}</div>
           {isOwner && (
