@@ -78,6 +78,19 @@ export const BlogProvider = ({ children }) => {
     },
   });
 
+  // Mutation for adding a comment to a blog
+  const addCommentMutation = useMutation({
+    mutationFn: ({ id, comment }) => blogService.addComment(id, comment),
+    onSuccess: (updatedBlog) => {
+      queryClient.invalidateQueries({ queryKey: ['blogs'] });
+      showNotification('Comment added successfully!', 'success');
+    },
+    onError: (error) => {
+      console.error('Error adding comment:', error);
+      showNotification('Error adding comment', 'error');
+    },
+  });
+
   const value = {
     blogs,
     isLoading,
@@ -85,9 +98,11 @@ export const BlogProvider = ({ children }) => {
     createBlog: (blogData, options) => createBlogMutation.mutate(blogData, options),
     updateBlog: updateBlogMutation.mutate,
     removeBlog: removeBlogMutation.mutate,
+    addComment: addCommentMutation.mutate,
     isCreating: createBlogMutation.isPending,
     isUpdating: updateBlogMutation.isPending,
     isRemoving: removeBlogMutation.isPending,
+    isAddingComment: addCommentMutation.isPending,
   };
 
   return <BlogContext.Provider value={value}>{children}</BlogContext.Provider>;

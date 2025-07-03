@@ -130,13 +130,17 @@ const App = () => {
         <Link to="/" style={{ marginRight: '10px' }}>
           blogs
         </Link>
-        <Link to="/users" style={{ marginRight: '10px' }}>users</Link>
+        <Link to="/users" style={{ marginRight: '10px' }}>
+          users
+        </Link>
         <span style={{ marginLeft: '10px' }}>
           {user.name} logged in
-          <button onClick={handleLogout} style={{ marginLeft: '5px' }}>logout</button>
+          <button onClick={handleLogout} style={{ marginLeft: '5px' }}>
+            logout
+          </button>
         </span>
       </div>
-      
+
       <h2>blog app</h2>
       <Notification />
 
