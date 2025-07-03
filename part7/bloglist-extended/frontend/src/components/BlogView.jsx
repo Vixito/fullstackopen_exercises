@@ -4,7 +4,7 @@ import { useBlog } from '../contexts/BlogContext';
 
 const BlogView = () => {
   const { id } = useParams();
-  const { blogs, isLoading, error, addComment } = useBlog();
+  const { blogs, isLoading, error, addComment, updateBlog } = useBlog();
   const [comment, setComment] = useState('');
 
   if (isLoading) {
@@ -29,6 +29,19 @@ const BlogView = () => {
     }
   };
 
+  const handleLike = () => {
+    const updatedBlog = {
+      ...blog,
+      likes: blog.likes + 1,
+      user: blog.user.id || blog.user, // Ensure user is ID
+    };
+
+    updateBlog({
+      id: blog.id,
+      blog: updatedBlog,
+    });
+  };
+
   return (
     <div>
       <h2>{blog.title}</h2>
@@ -37,7 +50,9 @@ const BlogView = () => {
           {blog.url}
         </a>
       </p>
-      <p>{blog.likes} likes</p>
+      <p>
+        {blog.likes} likes <button onClick={handleLike}>like</button>
+      </p>
       <p>added by {blog.user.name}</p>
 
       <h3>comments</h3>
