@@ -88,29 +88,31 @@ const App = () => {
 
   if (user === null) {
     return (
-      <div>
+      <div style={{ padding: '2rem', maxWidth: '400px', margin: '0 auto' }}>
         <h2>Log in to application</h2>
         <Notification />
         <form onSubmit={handleLogin}>
-          <div>
-            username
+          <div className="form-group">
+            <label className="form-label">Username</label>
             <input
               type="text"
               value={username}
               name="Username"
               onChange={({ target }) => setUsername(target.value)}
+              className="form-input"
             />
           </div>
-          <div>
-            password
+          <div className="form-group">
+            <label className="form-label">Password</label>
             <input
               type="password"
               value={password}
               name="Password"
               onChange={({ target }) => setPassword(target.value)}
+              className="form-input"
             />
           </div>
-          <button type="submit">login</button>
+          <button type="submit" className="btn btn-primary">login</button>
         </form>
       </div>
     );

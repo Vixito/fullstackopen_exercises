@@ -5,14 +5,6 @@ import { Link } from 'react-router-dom';
 const Blog = ({ blog, handleLike, handleRemove, currentUser }) => {
   const [showDetails, setShowDetails] = useState(false);
 
-  const blogStyle = {
-    padding: 10,
-    border: '1px solid #ccc',
-    marginBottom: 5,
-    borderRadius: 4,
-    background: '#f9f9f9',
-  };
-
   const likeBlog = () => {
     handleLike(blog);
   };
@@ -26,23 +18,28 @@ const Blog = ({ blog, handleLike, handleRemove, currentUser }) => {
     blog.user && (blog.user.username === currentUser.username || blog.user === currentUser.id);
 
   return (
-    <div style={blogStyle} className="blog">
+    <div className="blog">
       <div>
-        <Link to={`/blogs/${blog.id}`}>{blog.title}</Link> {blog.author}
-        <button onClick={() => setShowDetails(!showDetails)}>
-          {showDetails ? 'hide' : 'view'}
-        </button>
+        <h3>
+          <Link to={`/blogs/${blog.id}`}>{blog.title}</Link>
+        </h3>
+        <span className="blog-author">by {blog.author}</span>
+        <div className="blog-actions">
+          <button onClick={() => setShowDetails(!showDetails)} className="btn btn-secondary">
+            {showDetails ? 'hide' : 'view'}
+          </button>
+        </div>
       </div>
       {showDetails && (
         <div className="blogDetails">
           <div>{blog.url}</div>
           <div>
             likes {blog.likes}
-            <button onClick={likeBlog}>like</button>
+            <button onClick={likeBlog} className="btn btn-primary" style={{ marginLeft: '0.5rem' }}>like</button>
           </div>
           <div>{blog.user && blog.user.name}</div>
           {isOwner && (
-            <button onClick={removeBlog} style={{ background: 'red', color: 'white' }}>
+            <button onClick={removeBlog} className="btn btn-danger">
               remove
             </button>
           )}
