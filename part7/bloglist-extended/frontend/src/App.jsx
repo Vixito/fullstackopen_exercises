@@ -4,6 +4,7 @@ import BlogList from './components/BlogList';
 import Notification from './components/Notification';
 import Users from './components/Users';
 import User from './components/User';
+import BlogView from './components/BlogView';
 import { useNotification } from './contexts/NotificationContext';
 import { useUser } from './contexts/UserContext';
 import { useBlog } from './contexts/BlogContext';
@@ -150,6 +151,7 @@ const App = () => {
         />
         <Route path="/users" element={<Users />} />
         <Route path="/users/:id" element={<User />} />
+        <Route path="/blogs/:id" element={<BlogView />} />
       </Routes>
     </div>
   );
