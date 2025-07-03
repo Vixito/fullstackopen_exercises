@@ -3,6 +3,7 @@ import { Routes, Route, Link } from 'react-router-dom';
 import BlogList from './components/BlogList';
 import Notification from './components/Notification';
 import Users from './components/Users';
+import User from './components/User';
 import { useNotification } from './contexts/NotificationContext';
 import { useUser } from './contexts/UserContext';
 import { useBlog } from './contexts/BlogContext';
@@ -148,6 +149,7 @@ const App = () => {
           }
         />
         <Route path="/users" element={<Users />} />
+        <Route path="/users/:id" element={<User />} />
       </Routes>
     </div>
   );
