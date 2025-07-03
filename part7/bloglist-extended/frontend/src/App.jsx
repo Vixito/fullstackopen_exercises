@@ -1,22 +1,21 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import Blog from './components/Blog';
-import blogService from './services/blogs';
-import loginService from './services/login';
 import BlogForm from './components/BlogForm';
 import Togglable from './components/Togglable';
-import { showNotification } from './reducers/notificationSlice';
+import { showNotification, setNotification } from './reducers/notificationSlice';
 import Notification from './components/Notification';
 import { initializeBlogs, createBlog, likeBlog, deleteBlog } from './reducers/blogSlice';
+import { loginUser, logoutUser, initializeUser } from './reducers/userSlice';
 
 // App principal
 const App = () => {
-  const [user, setUser] = useState(null);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const blogFormRef = useRef();
   const dispatch = useDispatch();
   const blogs = useSelector((state) => state.blogs);
+  const user = useSelector((state) => state.user);
 
   // Al iniciar, obtener todos los blogs
   useEffect(() => {
@@ -25,36 +24,30 @@ const App = () => {
 
   // Revisar si hay usuario guardado en localStorage al iniciar
   useEffect(() => {
-    const loggedUserJSON = window.localStorage.getItem('loggedBlogAppUser');
-    if (loggedUserJSON) {
-      const user = JSON.parse(loggedUserJSON);
-      setUser(user);
-      // Si necesito token para peticiones:
-      blogService.setToken && blogService.setToken(user.token);
-    }
-  }, []);
+    dispatch(initializeUser());
+  }, [dispatch]);
 
   const handleLogin = async (event) => {
     event.preventDefault();
+    console.log('Intentando login con:', { username, password });
     try {
-      const userData = await loginService.login({ username, password });
-      window.localStorage.setItem('loggedBlogAppUser', JSON.stringify(userData));
-      setUser(userData);
+      await dispatch(loginUser({ username, password }));
       setUsername('');
       setPassword('');
-      blogService.setToken && blogService.setToken(userData.token);
+      console.log('Login exitoso');
       dispatch(showNotification('Login successful!', 'success'));
     } catch (error) {
-      dispatch(showNotification('Wrong credentials', 'error'));
+      console.log('Error en login:', error);
+      console.log('Despachando notificación de error...');
+      // Prueba directa sin thunk
+      dispatch(setNotification({ message: 'Wrong credentials', type: 'error' }));
+      console.log('Notificación despachada directamente');
     }
   };
 
   // Cerrar sesión
   const handleLogout = () => {
-    window.localStorage.removeItem('loggedBlogAppUser');
-    setUser(null);
-    // Si uso token, se podría limpiar aquí también
-    blogService.setToken && blogService.setToken(null);
+    dispatch(logoutUser());
     dispatch(showNotification('Logged out', 'success'));
   };
 
@@ -94,6 +87,7 @@ const App = () => {
   if (user === null) {
     return (
       <div>
+        <Notification />
         <h2>Log in to application</h2>
         <form onSubmit={handleLogin}>
           <div>
@@ -122,6 +116,7 @@ const App = () => {
 
   return (
     <div>
+      <Notification />
       <h2>blogs</h2>
       <div>
         {user.name} logged in
@@ -142,7 +137,6 @@ const App = () => {
             currentUser={user}
           />
         ))}
-      <Notification />
     </div>
   );
 };
