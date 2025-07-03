@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Blog from './components/Blog';
 import BlogForm from './components/BlogForm';
 import Togglable from './components/Togglable';
@@ -8,24 +9,64 @@ import loginService from './services/login';
 import blogService from './services/blogs';
 
 const App = () => {
-  const [blogs, setBlogs] = useState([]);
   const [user, setUser] = useState(null);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const blogFormRef = useRef();
   const showNotification = useNotification();
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const fetchBlogs = async () => {
-      try {
-        const initialBlogs = await blogService.getAll();
-        setBlogs(initialBlogs);
-      } catch (error) {
-        console.error('Error fetching blogs:', error);
-      }
-    };
-    fetchBlogs();
-  }, []);
+  // Fetch blogs using React Query
+  const {
+    data: blogs,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ['blogs'],
+    queryFn: blogService.getAll,
+  });
+
+  // Mutation for creating a new blog
+  const newBlogMutation = useMutation({
+    mutationFn: blogService.create,
+    onSuccess: (returnedBlog) => {
+      queryClient.invalidateQueries({ queryKey: ['blogs'] });
+      showNotification(
+        `A new blog "${returnedBlog.title}" by ${returnedBlog.author} added!`,
+        'success'
+      );
+      blogFormRef.current.toggleVisibility();
+    },
+    onError: (error) => {
+      console.error('Error adding blog:', error);
+      showNotification('Error adding blog', 'error');
+    },
+  });
+
+  // Mutation for updating a blog (likes)
+  const updateBlogMutation = useMutation({
+    mutationFn: ({ id, blog }) => blogService.update(id, blog),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['blogs'] });
+    },
+    onError: (error) => {
+      console.error('Error updating likes:', error);
+      showNotification('Error updating likes', 'error');
+    },
+  });
+
+  // Mutation for removing a blog
+  const removeBlogMutation = useMutation({
+    mutationFn: (blog) => blogService.remove(blog.id),
+    onSuccess: (_, blog) => {
+      queryClient.invalidateQueries({ queryKey: ['blogs'] });
+      showNotification(`Blog "${blog.title}" removed`, 'success');
+    },
+    onError: (error) => {
+      console.error('Error removing blog:', error);
+      showNotification('Error removing blog', 'error');
+    },
+  });
 
   // Revisar si hay usuario guardado en localStorage al iniciar
   useEffect(() => {
@@ -66,44 +107,23 @@ const App = () => {
   };
 
   // Nueva función para crear un blog, llamada por BlogForm
-  const addBlog = async (blogObject) => {
-    try {
-      const returnedBlog = await blogService.create(blogObject);
-      setBlogs(blogs.concat(returnedBlog));
-      showNotification(
-        `A new blog "${blogObject.title}" by ${blogObject.author} added!`,
-        'success'
-      );
-      blogFormRef.current.toggleVisibility(); // Oculta el formulario después de crear el blog
-    } catch (error) {
-      console.error('Error adding blog:', error);
-      showNotification('Error adding blog', 'error');
-    }
+  const addBlog = (blogObject) => {
+    newBlogMutation.mutate(blogObject);
   };
 
-  const handleLike = async (blogToUpdate) => {
-    try {
-      const updatedBlog = await blogService.update(blogToUpdate.id, {
+  const handleLike = (blogToUpdate) => {
+    updateBlogMutation.mutate({
+      id: blogToUpdate.id,
+      blog: {
         ...blogToUpdate,
         likes: blogToUpdate.likes + 1,
-      });
-      setBlogs(blogs.map((blog) => (blog.id !== blogToUpdate.id ? blog : updatedBlog)));
-    } catch (error) {
-      console.error('Error updating likes:', error);
-      showNotification('Error updating likes', 'error');
-    }
+      },
+    });
   };
 
-  const handleRemove = async (blogToRemove) => {
-    try {
-      if (window.confirm(`Remove blog ${blogToRemove.title} by ${blogToRemove.author}?`)) {
-        await blogService.remove(blogToRemove.id);
-        setBlogs(blogs.filter((blog) => blog.id !== blogToRemove.id));
-        showNotification(`Blog "${blogToRemove.title}" removed`, 'success');
-      }
-    } catch (error) {
-      console.error('Error removing blog:', error);
-      showNotification('Error removing blog', 'error');
+  const handleRemove = (blogToRemove) => {
+    if (window.confirm(`Remove blog ${blogToRemove.title} by ${blogToRemove.author}?`)) {
+      removeBlogMutation.mutate(blogToRemove);
     }
   };
 
@@ -137,6 +157,14 @@ const App = () => {
     );
   }
 
+  if (isLoading) {
+    return <div>Loading blogs...</div>;
+  }
+
+  if (error) {
+    return <div>Error loading blogs: {error.message}</div>;
+  }
+
   return (
     <div>
       <h2>blogs</h2>
@@ -148,7 +176,7 @@ const App = () => {
       <Togglable buttonLabel="create new blog" ref={blogFormRef}>
         <BlogForm createBlog={addBlog} />
       </Togglable>
-      {blogs
+      {blogs && blogs
         .slice() // copia para no mutar el estado original
         .sort((a, b) => b.likes - a.likes)
         .map((blog) => (
