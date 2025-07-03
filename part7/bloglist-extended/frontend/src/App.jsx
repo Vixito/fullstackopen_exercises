@@ -15,6 +15,7 @@ const App = () => {
   const { blogs, isLoading, error, createBlog, updateBlog, removeBlog } = useBlog();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [view, setView] = useState('blogs'); // 'blogs' or 'users'
   const blogFormRef = useRef();
   const showNotification = useNotification();
 
@@ -126,26 +127,55 @@ const App = () => {
     <div>
       <h2>blogs</h2>
       <Notification />
+
+      {/* Navigation */}
+      <div style={{ marginBottom: '20px' }}>
+        <button
+          onClick={() => setView('blogs')}
+          style={{
+            marginRight: '10px',
+            backgroundColor: view === 'blogs' ? '#e0e0e0' : 'white',
+          }}
+        >
+          blogs
+        </button>
+        <button
+          onClick={() => setView('users')}
+          style={{
+            backgroundColor: view === 'users' ? '#e0e0e0' : 'white',
+          }}
+        >
+          users
+        </button>
+      </div>
+
       <div>
         {user.name} logged in
         <button onClick={handleLogout}>logout</button>
       </div>
-      <Togglable buttonLabel="create new blog" ref={blogFormRef}>
-        <BlogForm createBlog={addBlog} />
-      </Togglable>
-      {blogs &&
-        blogs
-          .slice() // copia para no mutar el estado original
-          .sort((a, b) => b.likes - a.likes)
-          .map((blog) => (
-            <Blog
-              key={blog.id}
-              blog={blog}
-              handleLike={handleLike}
-              handleRemove={handleRemove}
-              currentUser={user}
-            />
-          ))}
+
+      {view === 'blogs' && (
+        <>
+          <Togglable buttonLabel="create new blog" ref={blogFormRef}>
+            <BlogForm createBlog={addBlog} />
+          </Togglable>
+          {blogs &&
+            blogs
+              .slice() // copia para no mutar el estado original
+              .sort((a, b) => b.likes - a.likes)
+              .map((blog) => (
+                <Blog
+                  key={blog.id}
+                  blog={blog}
+                  handleLike={handleLike}
+                  handleRemove={handleRemove}
+                  currentUser={user}
+                />
+              ))}
+        </>
+      )}
+
+      {view === 'users' && <Users />}
     </div>
   );
 };

@@ -13,17 +13,11 @@ const Blog = ({ blog, handleLike, handleRemove, currentUser }) => {
   };
 
   const likeBlog = () => {
-    handleLike({
-      ...blog,
-      likes: blog.likes + 1,
-      user: blog.user.id || blog.user,
-    });
+    handleLike(blog);
   };
 
   const removeBlog = () => {
-    if (window.confirm(`Remove blog "${blog.title}" by ${blog.author}?`)) {
-      handleRemove(blog);
-    }
+    handleRemove(blog);
   };
 
   // El usuario puede estar como objeto o id, por eso la comparación
