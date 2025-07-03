@@ -1,7 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
-import Blog from './components/Blog';
-import BlogForm from './components/BlogForm';
-import Togglable from './components/Togglable';
+import { useState, useEffect } from 'react';
+import { Routes, Route, Link } from 'react-router-dom';
+import BlogList from './components/BlogList';
 import Notification from './components/Notification';
 import Users from './components/Users';
 import { useNotification } from './contexts/NotificationContext';
@@ -12,11 +11,9 @@ import blogService from './services/blogs';
 
 const App = () => {
   const { user, setUser, clearUser } = useUser();
-  const { blogs, isLoading, error, createBlog, updateBlog, removeBlog } = useBlog();
+  const { isLoading, error, createBlog, updateBlog, removeBlog } = useBlog();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [view, setView] = useState('blogs'); // 'blogs' or 'users'
-  const blogFormRef = useRef();
   const showNotification = useNotification();
 
   // Revisar si hay usuario guardado en localStorage al iniciar
@@ -58,10 +55,12 @@ const App = () => {
   };
 
   // Nueva función para crear un blog, llamada por BlogForm
-  const addBlog = (blogObject) => {
+  const addBlog = (blogObject, blogFormRef) => {
     createBlog(blogObject, {
       onSuccess: () => {
-        blogFormRef.current.toggleVisibility();
+        if (blogFormRef && blogFormRef.current) {
+          blogFormRef.current.toggleVisibility();
+        }
       },
     });
   };
@@ -130,23 +129,10 @@ const App = () => {
 
       {/* Navigation */}
       <div style={{ marginBottom: '20px' }}>
-        <button
-          onClick={() => setView('blogs')}
-          style={{
-            marginRight: '10px',
-            backgroundColor: view === 'blogs' ? '#e0e0e0' : 'white',
-          }}
-        >
+        <Link to="/" style={{ marginRight: '10px' }}>
           blogs
-        </button>
-        <button
-          onClick={() => setView('users')}
-          style={{
-            backgroundColor: view === 'users' ? '#e0e0e0' : 'white',
-          }}
-        >
-          users
-        </button>
+        </Link>
+        <Link to="/users">users</Link>
       </div>
 
       <div>
@@ -154,28 +140,15 @@ const App = () => {
         <button onClick={handleLogout}>logout</button>
       </div>
 
-      {view === 'blogs' && (
-        <>
-          <Togglable buttonLabel="create new blog" ref={blogFormRef}>
-            <BlogForm createBlog={addBlog} />
-          </Togglable>
-          {blogs &&
-            blogs
-              .slice() // copia para no mutar el estado original
-              .sort((a, b) => b.likes - a.likes)
-              .map((blog) => (
-                <Blog
-                  key={blog.id}
-                  blog={blog}
-                  handleLike={handleLike}
-                  handleRemove={handleRemove}
-                  currentUser={user}
-                />
-              ))}
-        </>
-      )}
-
-      {view === 'users' && <Users />}
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <BlogList addBlog={addBlog} handleLike={handleLike} handleRemove={handleRemove} />
+          }
+        />
+        <Route path="/users" element={<Users />} />
+      </Routes>
     </div>
   );
 };

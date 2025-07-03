@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useUsers } from '../contexts/UsersContext';
 
 const Users = () => {
@@ -25,7 +26,9 @@ const Users = () => {
           {users &&
             users.map((user) => (
               <tr key={user.id}>
-                <td>{user.name}</td>
+                <td>
+                  <Link to={`/users/${user.id}`}>{user.name}</Link>
+                </td>
                 <td>{user.blogs ? user.blogs.length : 0}</td>
               </tr>
             ))}
