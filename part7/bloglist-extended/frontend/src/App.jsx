@@ -1,72 +1,22 @@
 import { useState, useEffect, useRef } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Blog from './components/Blog';
 import BlogForm from './components/BlogForm';
 import Togglable from './components/Togglable';
 import Notification from './components/Notification';
+import Users from './components/Users';
 import { useNotification } from './contexts/NotificationContext';
+import { useUser } from './contexts/UserContext';
+import { useBlog } from './contexts/BlogContext';
 import loginService from './services/login';
 import blogService from './services/blogs';
 
 const App = () => {
-  const [user, setUser] = useState(null);
+  const { user, setUser, clearUser } = useUser();
+  const { blogs, isLoading, error, createBlog, updateBlog, removeBlog } = useBlog();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const blogFormRef = useRef();
   const showNotification = useNotification();
-  const queryClient = useQueryClient();
-
-  // Fetch blogs using React Query
-  const {
-    data: blogs,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ['blogs'],
-    queryFn: blogService.getAll,
-  });
-
-  // Mutation for creating a new blog
-  const newBlogMutation = useMutation({
-    mutationFn: blogService.create,
-    onSuccess: (returnedBlog) => {
-      queryClient.invalidateQueries({ queryKey: ['blogs'] });
-      showNotification(
-        `A new blog "${returnedBlog.title}" by ${returnedBlog.author} added!`,
-        'success'
-      );
-      blogFormRef.current.toggleVisibility();
-    },
-    onError: (error) => {
-      console.error('Error adding blog:', error);
-      showNotification('Error adding blog', 'error');
-    },
-  });
-
-  // Mutation for updating a blog (likes)
-  const updateBlogMutation = useMutation({
-    mutationFn: ({ id, blog }) => blogService.update(id, blog),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['blogs'] });
-    },
-    onError: (error) => {
-      console.error('Error updating likes:', error);
-      showNotification('Error updating likes', 'error');
-    },
-  });
-
-  // Mutation for removing a blog
-  const removeBlogMutation = useMutation({
-    mutationFn: (blog) => blogService.remove(blog.id),
-    onSuccess: (_, blog) => {
-      queryClient.invalidateQueries({ queryKey: ['blogs'] });
-      showNotification(`Blog "${blog.title}" removed`, 'success');
-    },
-    onError: (error) => {
-      console.error('Error removing blog:', error);
-      showNotification('Error removing blog', 'error');
-    },
-  });
 
   // Revisar si hay usuario guardado en localStorage al iniciar
   useEffect(() => {
@@ -101,29 +51,36 @@ const App = () => {
   // Cerrar sesión
   const handleLogout = () => {
     window.localStorage.removeItem('loggedBlogappUser');
-    setUser(null);
+    clearUser();
     blogService.setToken(null);
     showNotification('Logged out', 'success');
   };
 
   // Nueva función para crear un blog, llamada por BlogForm
   const addBlog = (blogObject) => {
-    newBlogMutation.mutate(blogObject);
+    createBlog(blogObject, {
+      onSuccess: () => {
+        blogFormRef.current.toggleVisibility();
+      },
+    });
   };
 
   const handleLike = (blogToUpdate) => {
-    updateBlogMutation.mutate({
+    const updatedBlog = {
+      ...blogToUpdate,
+      likes: blogToUpdate.likes + 1,
+      user: blogToUpdate.user.id || blogToUpdate.user, // Ensure user is ID
+    };
+
+    updateBlog({
       id: blogToUpdate.id,
-      blog: {
-        ...blogToUpdate,
-        likes: blogToUpdate.likes + 1,
-      },
+      blog: updatedBlog,
     });
   };
 
   const handleRemove = (blogToRemove) => {
     if (window.confirm(`Remove blog ${blogToRemove.title} by ${blogToRemove.author}?`)) {
-      removeBlogMutation.mutate(blogToRemove);
+      removeBlog(blogToRemove);
     }
   };
 
@@ -176,18 +133,19 @@ const App = () => {
       <Togglable buttonLabel="create new blog" ref={blogFormRef}>
         <BlogForm createBlog={addBlog} />
       </Togglable>
-      {blogs && blogs
-        .slice() // copia para no mutar el estado original
-        .sort((a, b) => b.likes - a.likes)
-        .map((blog) => (
-          <Blog
-            key={blog.id}
-            blog={blog}
-            handleLike={handleLike}
-            handleRemove={handleRemove}
-            currentUser={user}
-          />
-        ))}
+      {blogs &&
+        blogs
+          .slice() // copia para no mutar el estado original
+          .sort((a, b) => b.likes - a.likes)
+          .map((blog) => (
+            <Blog
+              key={blog.id}
+              blog={blog}
+              handleLike={handleLike}
+              handleRemove={handleRemove}
+              currentUser={user}
+            />
+          ))}
     </div>
   );
 };
