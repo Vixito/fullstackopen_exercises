@@ -126,35 +126,35 @@ const App = () => {
 
   return (
     <div>
-      <div style={{ padding: '10px', backgroundColor: '#f0f0f0', marginBottom: '20px' }}>
-        <Link to="/" style={{ marginRight: '10px' }}>
-          blogs
-        </Link>
-        <Link to="/users" style={{ marginRight: '10px' }}>
-          users
-        </Link>
-        <span style={{ marginLeft: '10px' }}>
-          {user.name} logged in
-          <button onClick={handleLogout} style={{ marginLeft: '5px' }}>
+      <div className="navbar">
+        <div>
+          <Link to="/">blogs</Link>
+          <Link to="/users">users</Link>
+        </div>
+        <div className="user-info">
+          <span>{user.name} logged in</span>
+          <button onClick={handleLogout} className="logout-btn">
             logout
           </button>
-        </span>
+        </div>
       </div>
 
-      <h2>blog app</h2>
-      <Notification />
+      <div style={{ padding: '0 2rem' }}>
+        <h2>blog app</h2>
+        <Notification />
 
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <BlogList addBlog={addBlog} handleLike={handleLike} handleRemove={handleRemove} />
-          }
-        />
-        <Route path="/users" element={<Users />} />
-        <Route path="/users/:id" element={<User />} />
-        <Route path="/blogs/:id" element={<BlogView />} />
-      </Routes>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <BlogList addBlog={addBlog} handleLike={handleLike} handleRemove={handleRemove} />
+            }
+          />
+          <Route path="/users" element={<Users />} />
+          <Route path="/users/:id" element={<User />} />
+          <Route path="/blogs/:id" element={<BlogView />} />
+        </Routes>
+      </div>
     </div>
   );
 };

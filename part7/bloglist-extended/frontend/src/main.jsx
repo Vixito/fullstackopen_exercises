@@ -6,6 +6,7 @@ import { NotificationProvider } from './contexts/NotificationContext';
 import { UserProvider } from './contexts/UserContext';
 import { UsersProvider } from './contexts/UsersContext';
 import { BlogProvider } from './contexts/BlogContext';
+import './index.css';
 
 const queryClient = new QueryClient();
 

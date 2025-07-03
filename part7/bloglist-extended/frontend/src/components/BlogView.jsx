@@ -43,36 +43,46 @@ const BlogView = () => {
   };
 
   return (
-    <div>
+    <div className="blog-view">
       <h2>{blog.title}</h2>
-      <p>
-        <a href={blog.url} target="_blank" rel="noopener noreferrer">
-          {blog.url}
-        </a>
-      </p>
-      <p>
-        {blog.likes} likes <button onClick={handleLike}>like</button>
-      </p>
-      <p>added by {blog.user.name}</p>
+      <div className="blog-meta">
+        <p>
+          <a href={blog.url} target="_blank" rel="noopener noreferrer" className="blog-url">
+            {blog.url}
+          </a>
+        </p>
+        <div className="like-section">
+          <span className="like-count">{blog.likes} likes</span>{' '}
+          <button onClick={handleLike} className="btn btn-primary">
+            like
+          </button>
+        </div>
+        <p>added by {blog.user.name}</p>
+      </div>
 
-      <h3>comments</h3>
-      <form onSubmit={handleAddComment}>
-        <input
-          type="text"
-          value={comment}
-          onChange={(e) => setComment(e.target.value)}
-          placeholder="Add a comment..."
-        />
-        <button type="submit">add comment</button>
-      </form>
+      <div className="comments-section">
+        <h3>comments</h3>
+        <form onSubmit={handleAddComment} className="comment-form">
+          <input
+            type="text"
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            placeholder="Add a comment..."
+            className="comment-input"
+          />
+          <button type="submit" className="btn btn-primary">
+            add comment
+          </button>
+        </form>
 
-      <ul>
-        {blog.comments && blog.comments.length > 0 ? (
-          blog.comments.map((comment, index) => <li key={index}>{comment}</li>)
-        ) : (
-          <li>No comments yet</li>
-        )}
-      </ul>
+        <ul className="comment-list">
+          {blog.comments && blog.comments.length > 0 ? (
+            blog.comments.map((comment, index) => <li key={index}>{comment}</li>)
+          ) : (
+            <li>No comments yet</li>
+          )}
+        </ul>
+      </div>
     </div>
   );
 };
