@@ -1,86 +1,96 @@
 const { ApolloServer } = require("@apollo/server");
 const { startStandaloneServer } = require("@apollo/server/standalone");
-const { GraphQLError } = require('graphql')
-const { v1: uuid } = require("uuid");
+const { GraphQLError } = require("graphql");
+const mongoose = require("mongoose");
 
-// Datos temporales para desarrollo (reemplazaremos con MongoDB después)
-let authors = [
-  {
-    id: "1",
-    name: "Robert Martin",
-    born: 1952,
-  },
-  {
-    id: "2", 
-    name: "Martin Fowler",
-    born: 1963,
-  },
-  {
-    id: "3",
-    name: "Fyodor Dostoevsky", 
-    born: 1821,
-  },
-  {
-    id: "4",
-    name: "Joshua Kerievsky",
-  },
-  {
-    id: "5",
-    name: "Sandi Metz",
-  },
-];
+const { connectDB } = require("./config/db");
+const Author = require("./models/Author");
+const Book = require("./models/Book");
 
-let books = [
-  {
-    id: "1",
-    title: "Clean Code",
-    published: 2008,
-    author: "1", // ID del autor
-    genres: ["refactoring"],
-  },
-  {
-    id: "2",
-    title: "Agile software development",
-    published: 2002,
-    author: "1",
-    genres: ["agile", "patterns", "design"],
-  },
-  {
-    id: "3",
-    title: "Refactoring, edition 2",
-    published: 2018,
-    author: "2",
-    genres: ["refactoring"],
-  },
-  {
-    id: "4", 
-    title: "Refactoring to patterns",
-    published: 2008,
-    author: "4",
-    genres: ["refactoring", "patterns"],
-  },
-  {
-    id: "5",
-    title: "Practical Object-Oriented Design, An Agile Primer Using Ruby",
-    published: 2012,
-    author: "5",
-    genres: ["refactoring", "design"],
-  },
-  {
-    id: "6",
-    title: "Crime and punishment",
-    published: 1866,
-    author: "3",
-    genres: ["classic", "crime"],
-  },
-  {
-    id: "7",
-    title: "Demons",
-    published: 1872,
-    author: "3", 
-    genres: ["classic", "revolution"],
-  },
-];
+// Inicializar conexión a MongoDB
+connectDB().then(async () => {
+  // Popular la base de datos si está vacía
+  const authorCount = await Author.countDocuments();
+  if (authorCount === 0) {
+    console.log("Database is empty, populating with initial data...");
+    await populateDatabase();
+  }
+});
+
+const populateDatabase = async () => {
+  const authorsData = [
+    { name: "Robert Martin", born: 1952 },
+    { name: "Martin Fowler", born: 1963 },
+    { name: "Fyodor Dostoevsky", born: 1821 },
+    { name: "Joshua Kerievsky" },
+    { name: "Sandi Metz" },
+  ];
+
+  const booksData = [
+    {
+      title: "Clean Code",
+      published: 2008,
+      author: "Robert Martin",
+      genres: ["refactoring"],
+    },
+    {
+      title: "Agile software development",
+      published: 2002,
+      author: "Robert Martin",
+      genres: ["agile", "patterns", "design"],
+    },
+    {
+      title: "Refactoring, edition 2",
+      published: 2018,
+      author: "Martin Fowler",
+      genres: ["refactoring"],
+    },
+    {
+      title: "Refactoring to patterns",
+      published: 2008,
+      author: "Joshua Kerievsky",
+      genres: ["refactoring", "patterns"],
+    },
+    {
+      title: "Practical Object-Oriented Design, An Agile Primer Using Ruby",
+      published: 2012,
+      author: "Sandi Metz",
+      genres: ["refactoring", "design"],
+    },
+    {
+      title: "Crime and punishment",
+      published: 1866,
+      author: "Fyodor Dostoevsky",
+      genres: ["classic", "crime"],
+    },
+    {
+      title: "Demons",
+      published: 1872,
+      author: "Fyodor Dostoevsky",
+      genres: ["classic", "revolution"],
+    },
+  ];
+
+  // Crear autores
+  for (const authorData of authorsData) {
+    const author = new Author(authorData);
+    await author.save();
+  }
+
+  // Crear libros
+  for (const bookData of booksData) {
+    const author = await Author.findOne({ name: bookData.author });
+    const book = new Book({
+      title: bookData.title,
+      published: bookData.published,
+      author: author._id,
+      genres: bookData.genres,
+    });
+    await book.save();
+  }
+
+  console.log("Database populated successfully!");
+};
 
 const typeDefs = `
   type Book {
@@ -121,75 +131,95 @@ const typeDefs = `
 
 const resolvers = {
   Query: {
-    bookCount: () => books.length,
-    authorCount: () => authors.length,
-    allBooks: (root, args) => {
-      let filteredBooks = books;
+    bookCount: async () => Book.countDocuments(),
+    authorCount: async () => Author.countDocuments(),
+    allBooks: async (root, args) => {
+      let filter = {};
 
+      // Filtro por género usando MongoDB array query
+      if (args.genre) {
+        filter.genres = { $in: [args.genre] };
+      }
+
+      // Filtro por autor
       if (args.author) {
-        const author = authors.find(a => a.name === args.author)
+        const author = await Author.findOne({ name: args.author });
         if (author) {
-          filteredBooks = filteredBooks.filter(book => book.author === author.id)
+          filter.author = author._id;
+        } else {
+          // Si el autor no existe, retornamos array vacío
+          return [];
         }
       }
 
-      if (args.genre) {
-        filteredBooks = filteredBooks.filter(book =>
-          book.genres.includes(args.genre)
-        )
-      }
-
-      return filteredBooks
+      return Book.find(filter).populate("author");
     },
-    allAuthors: () => authors,
+    allAuthors: async () => Author.find({}),
   },
   Mutation: {
-    addBook: (root, args) => {
-      let author = authors.find(a => a.name === args.author)
-      
+    addBook: async (root, args) => {
+      let author = await Author.findOne({ name: args.author });
+
       if (!author) {
-        const newAuthor = {
-          id: uuid(),
-          name: args.author,
-          born: null
+        const newAuthor = new Author({ name: args.author });
+        try {
+          author = await newAuthor.save();
+        } catch (error) {
+          throw new GraphQLError("Creating author failed", {
+            extensions: {
+              code: "BAD_USER_INPUT",
+              invalidArgs: args.author,
+              error,
+            },
+          });
         }
-        authors = authors.concat(newAuthor)
-        author = newAuthor
       }
 
-      const book = { 
-        id: uuid(),
+      const book = new Book({
         title: args.title,
         published: args.published,
-        author: author.id,
-        genres: args.genres
+        author: author._id,
+        genres: args.genres,
+      });
+
+      try {
+        const savedBook = await book.save();
+        return Book.findById(savedBook._id).populate("author");
+      } catch (error) {
+        throw new GraphQLError("Creating book failed", {
+          extensions: {
+            code: "BAD_USER_INPUT",
+            invalidArgs: args,
+            error,
+          },
+        });
       }
-      books = books.concat(book)
-      return book
     },
-    editAuthor: (root, args) => {
-      const author = authors.find(a => a.name === args.name)
+    editAuthor: async (root, args) => {
+      const author = await Author.findOne({ name: args.name });
       if (!author) {
-        return null
+        return null;
       }
 
-      const updatedAuthor = { ...author, born: args.setBornTo }
-      authors = authors.map(a => 
-        a.id === author.id ? updatedAuthor : a
-      )
-      return updatedAuthor
-    }
+      author.born = args.setBornTo;
+      try {
+        return await author.save();
+      } catch (error) {
+        throw new GraphQLError("Editing author failed", {
+          extensions: {
+            code: "BAD_USER_INPUT",
+            invalidArgs: args,
+            error,
+          },
+        });
+      }
+    },
   },
   Author: {
-    bookCount: (root) => {
-      return books.filter(book => book.author === root.id).length
-    }
+    bookCount: async (root) => {
+      return Book.countDocuments({ author: root._id });
+    },
   },
-  Book: {
-    author: (root) => {
-      return authors.find(author => author.id === root.author)
-    }
-  }
 };
 
 const server = new ApolloServer({
