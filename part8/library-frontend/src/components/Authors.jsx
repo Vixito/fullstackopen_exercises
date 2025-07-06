@@ -27,6 +27,10 @@ const Authors = (props) => {
   const submit = (event) => {
     event.preventDefault();
 
+    if (!name || !born) {
+      return;
+    }
+
     editAuthor({
       variables: {
         name,
@@ -62,10 +66,17 @@ const Authors = (props) => {
       <form onSubmit={submit}>
         <div>
           name
-          <input
+          <select
             value={name}
             onChange={({ target }) => setName(target.value)}
-          />
+          >
+            <option value="">Select author...</option>
+            {authors.map((a) => (
+              <option key={a.name} value={a.name}>
+                {a.name}
+              </option>
+            ))}
+          </select>
         </div>
         <div>
           born
