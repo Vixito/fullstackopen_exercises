@@ -1,6 +1,6 @@
 const { ApolloServer } = require("@apollo/server");
 const { startStandaloneServer } = require("@apollo/server/standalone");
-const { GraphQLError } = require("graphql");
+const { GraphQLError } = require("graphql"); // Implemented
 const mongoose = require("mongoose");
 
 const { connectDB } = require("./config/db");
