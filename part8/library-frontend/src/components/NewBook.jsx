@@ -1,6 +1,11 @@
 import { useState } from "react";
 import { useMutation } from "@apollo/client";
-import { ADD_BOOK, ALL_BOOKS, ALL_AUTHORS } from "../queries";
+import {
+  ADD_BOOK,
+  ALL_BOOKS,
+  ALL_AUTHORS,
+  ALL_BOOKS_BY_GENRE,
+} from "../queries";
 
 const NewBook = (props) => {
   const [title, setTitle] = useState("");
@@ -10,9 +15,20 @@ const NewBook = (props) => {
   const [genres, setGenres] = useState([]);
 
   const [addBook] = useMutation(ADD_BOOK, {
-    refetchQueries: [{ query: ALL_BOOKS }, { query: ALL_AUTHORS }],
+    onCompleted: (data) => {
+      console.log("Book added successfully:", data);
+      // Navegar a books después de agregar exitosamente
+      if (props.setPage) {
+        props.setPage("books");
+      }
+    },
+    // Usar refetchQueries más simple
+    refetchQueries: "all",
+    awaitRefetchQueries: true,
     onError: (error) => {
       console.error("Error adding book:", error);
+      console.error("Error details:", error.graphQLErrors);
+      console.error("Network error:", error.networkError);
     },
   });
 

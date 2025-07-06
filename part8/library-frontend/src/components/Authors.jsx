@@ -22,6 +22,14 @@ const Authors = (props) => {
     return <div>loading...</div>;
   }
 
+  if (result.error) {
+    return <div>Error: {result.error.message}</div>;
+  }
+
+  if (!result.data || !result.data.allAuthors) {
+    return <div>No data available</div>;
+  }
+
   const authors = result.data.allAuthors;
 
   const submit = (event) => {

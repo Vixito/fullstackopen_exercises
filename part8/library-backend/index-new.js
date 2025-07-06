@@ -80,10 +80,8 @@ const generateId = () => String(nextId++);
 
 // Actualizar conteo de libros para cada autor
 const updateBookCounts = () => {
-  authors.forEach((author) => {
-    author.bookCount = books.filter(
-      (book) => book.author.id === author.id
-    ).length;
+  authors.forEach(author => {
+    author.bookCount = books.filter(book => book.author.id === author.id).length;
   });
 };
 
@@ -143,19 +141,19 @@ const resolvers = {
     authorCount: () => authors.length,
     allBooks: (root, args) => {
       let filteredBooks = books;
-
+      
       if (args.author) {
-        filteredBooks = filteredBooks.filter(
-          (book) => book.author.name === args.author
+        filteredBooks = filteredBooks.filter(book => 
+          book.author.name === args.author
         );
       }
-
+      
       if (args.genre) {
-        filteredBooks = filteredBooks.filter((book) =>
+        filteredBooks = filteredBooks.filter(book =>
           book.genres.includes(args.genre)
         );
       }
-
+      
       return filteredBooks;
     },
     allAuthors: () => {
@@ -170,11 +168,8 @@ const resolvers = {
 
   Mutation: {
     addBook: (root, args, context) => {
-      console.log(
-        "ADD_BOOK mutation - context.currentUser:",
-        context.currentUser
-      );
-
+      console.log("ADD_BOOK mutation - context.currentUser:", context.currentUser);
+      
       if (!context.currentUser) {
         throw new GraphQLError("Not authenticated", {
           extensions: {
@@ -184,7 +179,7 @@ const resolvers = {
       }
 
       // Buscar o crear autor
-      let author = authors.find((a) => a.name === args.author);
+      let author = authors.find(a => a.name === args.author);
       if (!author) {
         const authorId = generateId();
         author = {
@@ -220,7 +215,7 @@ const resolvers = {
         });
       }
 
-      const author = authors.find((a) => a.name === args.name);
+      const author = authors.find(a => a.name === args.name);
       if (!author) {
         return null;
       }
@@ -231,7 +226,7 @@ const resolvers = {
     },
 
     createUser: (root, args) => {
-      const existingUser = users.find((u) => u.username === args.username);
+      const existingUser = users.find(u => u.username === args.username);
       if (existingUser) {
         throw new GraphQLError("Username already exists", {
           extensions: {
@@ -252,8 +247,8 @@ const resolvers = {
     },
 
     login: (root, args) => {
-      const user = users.find((u) => u.username === args.username);
-
+      const user = users.find(u => u.username === args.username);
+      
       if (!user) {
         throw new GraphQLError("Wrong credentials", {
           extensions: {
@@ -285,23 +280,20 @@ startStandaloneServer(server, {
     const auth = req ? req.headers.authorization : null;
     if (auth && auth.startsWith("Bearer ")) {
       const decodedToken = jwt.verify(auth.substring(7), JWT_SECRET);
-      const currentUser = users.find((u) => u.id === decodedToken.id);
-
+      const currentUser = users.find(u => u.id === decodedToken.id);
+      
       console.log("Auth context - decoded token:", decodedToken);
       console.log("Auth context - found user:", currentUser);
-
+      
       return { currentUser };
     }
-
+    
     console.log("Auth context - no valid auth found");
     return {};
   },
 }).then(({ url }) => {
   console.log(`🚀 Server ready at ${url}`);
-  console.log(
-    "Available users:",
-    users.map((u) => u.username)
-  );
+  console.log("Available users:", users.map(u => u.username));
   console.log("Total books:", books.length);
   console.log("Total authors:", authors.length);
 });

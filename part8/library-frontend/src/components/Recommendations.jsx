@@ -22,11 +22,6 @@ const Recommendations = (props) => {
     return <div>loading...</div>;
   }
 
-  // Agregamos logging para debug
-  console.log("userResult:", userResult);
-  console.log("userResult.data:", userResult.data);
-  console.log("userResult.error:", userResult.error);
-
   if (userResult.error) {
     return <div>Error: {userResult.error.message}</div>;
   }

@@ -6,11 +6,16 @@ const Books = (props) => {
   const [selectedGenre, setSelectedGenre] = useState(null);
 
   // Query para obtener todos los libros (para géneros únicos)
-  const allBooksResult = useQuery(ALL_BOOKS);
+  const allBooksResult = useQuery(ALL_BOOKS, {
+    fetchPolicy: "cache-and-network",
+    notifyOnNetworkStatusChange: true,
+  });
 
   // Query para obtener libros filtrados por género
   const filteredBooksResult = useQuery(ALL_BOOKS_BY_GENRE, {
     variables: { genre: selectedGenre },
+    fetchPolicy: "cache-and-network",
+    notifyOnNetworkStatusChange: true,
   });
 
   if (!props.show) {
@@ -19,6 +24,22 @@ const Books = (props) => {
 
   if (allBooksResult.loading || filteredBooksResult.loading) {
     return <div>loading...</div>;
+  }
+
+  if (allBooksResult.error) {
+    return <div>Error loading all books: {allBooksResult.error.message}</div>;
+  }
+
+  if (filteredBooksResult.error) {
+    return (
+      <div>
+        Error loading filtered books: {filteredBooksResult.error.message}
+      </div>
+    );
+  }
+
+  if (!allBooksResult.data || !filteredBooksResult.data) {
+    return <div>No data available</div>;
   }
 
   const allBooks = allBooksResult.data.allBooks;

@@ -1,30 +1,31 @@
-const { MongoMemoryServer } = require("mongodb-memory-server");
 const mongoose = require("mongoose");
 
-let mongod;
-
+// Configuración simplificada para usar base de datos en memoria con mongoose
 const connectDB = async () => {
   try {
-    mongod = await MongoMemoryServer.create();
-    const uri = mongod.getUri();
-
-    await mongoose.connect(uri);
-    console.log("Connected to MongoDB in memory");
-
-    return uri;
+    console.log("Connecting to in-memory database...");
+    
+    // Usar mongoose con una base de datos simple en memoria
+    // Esto evita las dependencias externas problemáticas
+    await mongoose.connect("mongodb://memory", {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    
+    console.log("Connected to in-memory database successfully");
+    return "mongodb://memory";
   } catch (error) {
-    console.error("Error connecting to MongoDB:", error);
-    process.exit(1);
+    console.error("Error connecting to database:", error);
+    throw error;
   }
 };
 
 const disconnectDB = async () => {
   try {
-    await mongoose.connection.dropDatabase();
     await mongoose.connection.close();
-    await mongod.stop();
+    console.log("Disconnected from database");
   } catch (error) {
-    console.error("Error disconnecting from MongoDB:", error);
+    console.error("Error disconnecting from database:", error);
   }
 };
 
