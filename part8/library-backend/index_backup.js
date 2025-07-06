@@ -1,94 +1,110 @@
 const { ApolloServer } = require("@apollo/server");
 const { startStandaloneServer } = require("@apollo/server/standalone");
-const { GraphQLError } = require('graphql')
 const { v1: uuid } = require("uuid");
 
-// Datos temporales para desarrollo (reemplazaremos con MongoDB después)
 let authors = [
   {
-    id: "1",
     name: "Robert Martin",
+    id: "afa51ab0-344d-11e9-a414-719c6709cf3e",
     born: 1952,
   },
   {
-    id: "2", 
     name: "Martin Fowler",
+    id: "afa5b6f0-344d-11e9-a414-719c6709cf3e",
     born: 1963,
   },
   {
-    id: "3",
-    name: "Fyodor Dostoevsky", 
+    name: "Fyodor Dostoevsky",
+    id: "afa5b6f1-344d-11e9-a414-719c6709cf3e",
     born: 1821,
   },
   {
-    id: "4",
-    name: "Joshua Kerievsky",
+    name: "Joshua Kerievsky", // birthyear not known
+    id: "afa5b6f2-344d-11e9-a414-719c6709cf3e",
   },
   {
-    id: "5",
-    name: "Sandi Metz",
+    name: "Sandi Metz", // birthyear not known
+    id: "afa5b6f3-344d-11e9-a414-719c6709cf3e",
   },
 ];
 
+/*
+ * Suomi:
+ * Saattaisi olla järkevämpää assosioida kirja ja sen tekijä tallettamalla kirjan yhteyteen tekijän nimen sijaan tekijän id
+ * Yksinkertaisuuden vuoksi tallennamme kuitenkin kirjan yhteyteen tekijän nimen
+ *
+ * English:
+ * It might make more sense to associate a book with its author by storing the author's id in the context of the book instead of the author's name
+ * However, for simplicity, we will store the author's name in connection with the book
+ *
+ * Spanish:
+ * Podría tener más sentido asociar un libro con su autor almacenando la id del autor en el contexto del libro en lugar del nombre del autor
+ * Sin embargo, por simplicidad, almacenaremos el nombre del autor en conexión con el libro
+ */
+
 let books = [
   {
-    id: "1",
     title: "Clean Code",
     published: 2008,
-    author: "1", // ID del autor
+    author: "Robert Martin",
+    id: "afa5b6f4-344d-11e9-a414-719c6709cf3e",
     genres: ["refactoring"],
   },
   {
-    id: "2",
     title: "Agile software development",
     published: 2002,
-    author: "1",
+    author: "Robert Martin",
+    id: "afa5b6f5-344d-11e9-a414-719c6709cf3e",
     genres: ["agile", "patterns", "design"],
   },
   {
-    id: "3",
     title: "Refactoring, edition 2",
     published: 2018,
-    author: "2",
+    author: "Martin Fowler",
+    id: "afa5de00-344d-11e9-a414-719c6709cf3e",
     genres: ["refactoring"],
   },
   {
-    id: "4", 
     title: "Refactoring to patterns",
     published: 2008,
-    author: "4",
+    author: "Joshua Kerievsky",
+    id: "afa5de01-344d-11e9-a414-719c6709cf3e",
     genres: ["refactoring", "patterns"],
   },
   {
-    id: "5",
     title: "Practical Object-Oriented Design, An Agile Primer Using Ruby",
     published: 2012,
-    author: "5",
+    author: "Sandi Metz",
+    id: "afa5de02-344d-11e9-a414-719c6709cf3e",
     genres: ["refactoring", "design"],
   },
   {
-    id: "6",
     title: "Crime and punishment",
     published: 1866,
-    author: "3",
+    author: "Fyodor Dostoevsky",
+    id: "afa5de03-344d-11e9-a414-719c6709cf3e",
     genres: ["classic", "crime"],
   },
   {
-    id: "7",
     title: "Demons",
     published: 1872,
-    author: "3", 
+    author: "Fyodor Dostoevsky",
+    id: "afa5de04-344d-11e9-a414-719c6709cf3e",
     genres: ["classic", "revolution"],
   },
 ];
+
+/*
+  you can remove the placeholder query once your first one has been implemented 
+*/
 
 const typeDefs = `
   type Book {
     title: String!
     published: Int!
-    author: Author!
-    genres: [String!]!
+    author: String!
     id: ID!
+    genres: [String!]!
   }
 
   type Author {
@@ -127,69 +143,54 @@ const resolvers = {
       let filteredBooks = books;
 
       if (args.author) {
-        const author = authors.find(a => a.name === args.author)
-        if (author) {
-          filteredBooks = filteredBooks.filter(book => book.author === author.id)
-        }
+        filteredBooks = filteredBooks.filter(
+          (book) => book.author === args.author
+        );
       }
 
       if (args.genre) {
-        filteredBooks = filteredBooks.filter(book =>
+        filteredBooks = filteredBooks.filter((book) =>
           book.genres.includes(args.genre)
-        )
+        );
       }
 
-      return filteredBooks
+      return filteredBooks;
     },
     allAuthors: () => authors,
   },
   Mutation: {
     addBook: (root, args) => {
-      let author = authors.find(a => a.name === args.author)
-      
-      if (!author) {
+      // Check if author exists, if not, add to authors array
+      if (!authors.find(author => author.name === args.author)) {
         const newAuthor = {
-          id: uuid(),
           name: args.author,
+          id: uuid(),
           born: null
         }
         authors = authors.concat(newAuthor)
-        author = newAuthor
       }
 
-      const book = { 
-        id: uuid(),
-        title: args.title,
-        published: args.published,
-        author: author.id,
-        genres: args.genres
-      }
+      const book = { ...args, id: uuid() }
       books = books.concat(book)
       return book
     },
     editAuthor: (root, args) => {
-      const author = authors.find(a => a.name === args.name)
+      const author = authors.find(author => author.name === args.name)
       if (!author) {
         return null
       }
 
       const updatedAuthor = { ...author, born: args.setBornTo }
-      authors = authors.map(a => 
-        a.id === author.id ? updatedAuthor : a
+      authors = authors.map(author => 
+        author.name === args.name ? updatedAuthor : author
       )
       return updatedAuthor
     }
   },
   Author: {
-    bookCount: (root) => {
-      return books.filter(book => book.author === root.id).length
-    }
+    bookCount: (root) =>
+      books.filter((book) => book.author === root.name).length,
   },
-  Book: {
-    author: (root) => {
-      return authors.find(author => author.id === root.author)
-    }
-  }
 };
 
 const server = new ApolloServer({
