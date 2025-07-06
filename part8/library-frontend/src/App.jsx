@@ -5,7 +5,12 @@ import Books from "./components/Books";
 import NewBook from "./components/NewBook";
 import LoginForm from "./components/LoginForm";
 import Recommendations from "./components/Recommendations";
-import { BOOK_ADDED, ALL_BOOKS, ALL_AUTHORS, ALL_BOOKS_BY_GENRE } from "./queries";
+import {
+  BOOK_ADDED,
+  ALL_BOOKS,
+  ALL_AUTHORS,
+  ALL_BOOKS_BY_GENRE,
+} from "./queries";
 
 const App = () => {
   const [page, setPage] = useState("authors");
@@ -27,21 +32,21 @@ const App = () => {
     client.cache.updateQuery({ query: ALL_BOOKS }, (data) => {
       if (!data) return null;
       return {
-        allBooks: uniques([...data.allBooks, addedBook])
+        allBooks: uniques([...data.allBooks, addedBook]),
       };
     });
 
     // Actualizar queries filtradas por género
-    addedBook.genres.forEach(genre => {
+    addedBook.genres.forEach((genre) => {
       client.cache.updateQuery(
-        { 
+        {
           query: ALL_BOOKS_BY_GENRE,
-          variables: { genre }
+          variables: { genre },
         },
         (data) => {
           if (!data) return null;
           return {
-            allBooks: uniques([...data.allBooks, addedBook])
+            allBooks: uniques([...data.allBooks, addedBook]),
           };
         }
       );
@@ -52,7 +57,7 @@ const App = () => {
   useSubscription(BOOK_ADDED, {
     onData: ({ data, client }) => {
       const addedBook = data.data.bookAdded;
-      
+
       // Mostrar notificación
       window.alert(
         `New book added: "${addedBook.title}" by ${addedBook.author.name}`
@@ -64,27 +69,30 @@ const App = () => {
       // Actualizar caché de autores
       client.cache.updateQuery({ query: ALL_AUTHORS }, (data) => {
         if (!data) return null;
-        
+
         const authorExists = data.allAuthors.find(
-          author => author.name === addedBook.author.name
+          (author) => author.name === addedBook.author.name
         );
-        
+
         if (!authorExists) {
           // Nuevo autor
           return {
-            allAuthors: [...data.allAuthors, {
-              ...addedBook.author,
-              bookCount: 1
-            }]
+            allAuthors: [
+              ...data.allAuthors,
+              {
+                ...addedBook.author,
+                bookCount: 1,
+              },
+            ],
           };
         } else {
           // Autor existente, actualizar bookCount
           return {
-            allAuthors: data.allAuthors.map(author =>
+            allAuthors: data.allAuthors.map((author) =>
               author.name === addedBook.author.name
                 ? { ...author, bookCount: author.bookCount + 1 }
                 : author
-            )
+            ),
           };
         }
       });
