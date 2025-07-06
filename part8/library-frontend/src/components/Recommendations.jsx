@@ -1,29 +1,45 @@
 import { useQuery } from "@apollo/client";
-import { ALL_BOOKS, ME } from "../queries";
+import { ALL_BOOKS_BY_GENRE, ME } from "../queries";
 
 const Recommendations = (props) => {
-  const booksResult = useQuery(ALL_BOOKS);
-  const userResult = useQuery(ME);
+  const userResult = useQuery(ME, {
+    errorPolicy: "all", // Para ver errores
+    fetchPolicy: "cache-and-network", // Para asegurar que se ejecute la query
+  });
+
+  // Solo hacer la query de libros cuando tengamos el usuario
+  const user = userResult.data?.me;
+  const booksResult = useQuery(ALL_BOOKS_BY_GENRE, {
+    variables: { genre: user?.favoriteGenre },
+    skip: !user, // Skip la query si no hay usuario
+  });
 
   if (!props.show) {
     return null;
   }
 
-  if (booksResult.loading || userResult.loading) {
+  if (userResult.loading) {
     return <div>loading...</div>;
+  }
+
+  // Agregamos logging para debug
+  console.log("userResult:", userResult);
+  console.log("userResult.data:", userResult.data);
+  console.log("userResult.error:", userResult.error);
+
+  if (userResult.error) {
+    return <div>Error: {userResult.error.message}</div>;
   }
 
   if (!userResult.data.me) {
     return <div>You must be logged in to see recommendations</div>;
   }
 
-  const books = booksResult.data.allBooks;
-  const user = userResult.data.me;
+  if (booksResult.loading) {
+    return <div>loading...</div>;
+  }
 
-  // Filtrar libros por el género favorito del usuario
-  const recommendedBooks = books.filter((book) =>
-    book.genres.includes(user.favoriteGenre)
-  );
+  const recommendedBooks = booksResult.data.allBooks;
 
   return (
     <div>

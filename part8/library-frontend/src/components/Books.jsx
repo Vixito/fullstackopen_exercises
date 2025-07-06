@@ -1,28 +1,31 @@
 import { useState } from "react";
 import { useQuery } from "@apollo/client";
-import { ALL_BOOKS } from "../queries";
+import { ALL_BOOKS, ALL_BOOKS_BY_GENRE } from "../queries";
 
 const Books = (props) => {
   const [selectedGenre, setSelectedGenre] = useState(null);
-  const result = useQuery(ALL_BOOKS);
+
+  // Query para obtener todos los libros (para géneros únicos)
+  const allBooksResult = useQuery(ALL_BOOKS);
+
+  // Query para obtener libros filtrados por género
+  const filteredBooksResult = useQuery(ALL_BOOKS_BY_GENRE, {
+    variables: { genre: selectedGenre },
+  });
 
   if (!props.show) {
     return null;
   }
 
-  if (result.loading) {
+  if (allBooksResult.loading || filteredBooksResult.loading) {
     return <div>loading...</div>;
   }
 
-  const books = result.data.allBooks;
+  const allBooks = allBooksResult.data.allBooks;
+  const booksToShow = filteredBooksResult.data.allBooks;
 
-  // Obtener todos los géneros únicos
-  const allGenres = [...new Set(books.flatMap((book) => book.genres))];
-
-  // Filtrar libros según el género seleccionado
-  const booksToShow = selectedGenre
-    ? books.filter((book) => book.genres.includes(selectedGenre))
-    : books;
+  // Obtener todos los géneros únicos de todos los libros
+  const allGenres = [...new Set(allBooks.flatMap((book) => book.genres))];
 
   return (
     <div>
