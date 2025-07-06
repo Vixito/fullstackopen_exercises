@@ -1,9 +1,20 @@
 const { ApolloServer } = require("@apollo/server");
-const { startStandaloneServer } = require("@apollo/server/standalone");
+const { expressMiddleware } = require("@apollo/server/express4");
+const {
+  ApolloServerPluginDrainHttpServer,
+} = require("@apollo/server/plugin/drainHttpServer");
+const { makeExecutableSchema } = require("@graphql-tools/schema");
+const { WebSocketServer } = require("ws");
+const { useServer } = require("graphql-ws/lib/use/ws");
+const { PubSub } = require("graphql-subscriptions");
 const { GraphQLError } = require("graphql");
 const jwt = require("jsonwebtoken");
+const express = require("express");
+const cors = require("cors");
+const http = require("http");
 
-const JWT_SECRET = "SUPERSECRETKEY"; // En producción, usar variable de entorno
+const JWT_SECRET = "SUPERSECRETKEY";
+const pubsub = new PubSub();
 
 // Base de datos en memoria simple
 let authors = [
@@ -78,12 +89,24 @@ let users = [
 let nextId = 8;
 const generateId = () => String(nextId++);
 
+// Función para calcular bookCount de manera eficiente (resuelve n+1)
+const calculateBookCounts = () => {
+  const bookCounts = {};
+
+  // Contar libros por autor en una sola pasada
+  books.forEach((book) => {
+    const authorId = book.author.id;
+    bookCounts[authorId] = (bookCounts[authorId] || 0) + 1;
+  });
+
+  return bookCounts;
+};
+
 // Actualizar conteo de libros para cada autor
 const updateBookCounts = () => {
+  const bookCounts = calculateBookCounts();
   authors.forEach((author) => {
-    author.bookCount = books.filter(
-      (book) => book.author.id === author.id
-    ).length;
+    author.bookCount = bookCounts[author.id] || 0;
   });
 };
 
@@ -135,6 +158,10 @@ const typeDefs = `
     createUser(username: String!, favoriteGenre: String!): User
     login(username: String!): Token
   }
+
+  type Subscription {
+    bookAdded: Book!
+  }
 `;
 
 const resolvers = {
@@ -159,8 +186,13 @@ const resolvers = {
       return filteredBooks;
     },
     allAuthors: () => {
-      updateBookCounts();
-      return authors;
+      // Solución n+1: Calcular todos los bookCounts de una vez
+      const bookCounts = calculateBookCounts();
+
+      return authors.map((author) => ({
+        ...author,
+        bookCount: bookCounts[author.id] || 0,
+      }));
     },
     me: (root, args, context) => {
       console.log("ME query - context.currentUser:", context.currentUser);
@@ -169,7 +201,7 @@ const resolvers = {
   },
 
   Mutation: {
-    addBook: (root, args, context) => {
+    addBook: async (root, args, context) => {
       console.log(
         "ADD_BOOK mutation - context.currentUser:",
         context.currentUser
@@ -206,6 +238,9 @@ const resolvers = {
 
       books.push(book);
       updateBookCounts();
+
+      // Publicar suscripción
+      pubsub.publish("BOOK_ADDED", { bookAdded: book });
 
       console.log("Book added:", book);
       return book;
@@ -272,36 +307,105 @@ const resolvers = {
       return { value: token };
     },
   },
+
+  Subscription: {
+    bookAdded: {
+      subscribe: () => pubsub.asyncIterator(["BOOK_ADDED"]),
+    },
+  },
 };
 
-const server = new ApolloServer({
-  typeDefs,
-  resolvers,
-});
-
-startStandaloneServer(server, {
-  listen: { port: 4000 },
-  context: async ({ req, res }) => {
-    const auth = req ? req.headers.authorization : null;
-    if (auth && auth.startsWith("Bearer ")) {
+// Función para obtener usuario del contexto
+const getUser = async (req) => {
+  const auth = req ? req.headers.authorization : null;
+  if (auth && auth.startsWith("Bearer ")) {
+    try {
       const decodedToken = jwt.verify(auth.substring(7), JWT_SECRET);
       const currentUser = users.find((u) => u.id === decodedToken.id);
-
-      console.log("Auth context - decoded token:", decodedToken);
-      console.log("Auth context - found user:", currentUser);
-
-      return { currentUser };
+      console.log(
+        "Auth context - found user:",
+        currentUser?.username || "null"
+      );
+      return currentUser;
+    } catch (error) {
+      console.log("Token verification failed:", error.message);
+      return null;
     }
+  }
+  return null;
+};
 
-    console.log("Auth context - no valid auth found");
-    return {};
-  },
-}).then(({ url }) => {
-  console.log(`🚀 Server ready at ${url}`);
-  console.log(
-    "Available users:",
-    users.map((u) => u.username)
+const start = async () => {
+  const app = express();
+  const httpServer = http.createServer(app);
+
+  const schema = makeExecutableSchema({ typeDefs, resolvers });
+
+  // WebSocket server para suscripciones
+  const wsServer = new WebSocketServer({
+    server: httpServer,
+    path: "/graphql",
+  });
+
+  const serverCleanup = useServer(
+    {
+      schema,
+      context: async (ctx, msg, args) => {
+        // Para suscripciones WebSocket, el contexto puede ser diferente
+        return {};
+      },
+    },
+    wsServer
   );
-  console.log("Total books:", books.length);
-  console.log("Total authors:", authors.length);
-});
+
+  const server = new ApolloServer({
+    schema,
+    plugins: [
+      ApolloServerPluginDrainHttpServer({ httpServer }),
+      {
+        async serverWillStart() {
+          return {
+            async drainServer() {
+              await serverCleanup.dispose();
+            },
+          };
+        },
+      },
+    ],
+  });
+
+  await server.start();
+
+  app.use(
+    "/graphql",
+    cors({
+      origin: [
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "https://studio.apollographql.com",
+      ],
+      credentials: true,
+    }),
+    express.json(),
+    expressMiddleware(server, {
+      context: async ({ req }) => {
+        const currentUser = await getUser(req);
+        return { currentUser };
+      },
+    })
+  );
+
+  const PORT = 4000;
+  httpServer.listen(PORT, () => {
+    console.log(`🚀 Server ready at http://localhost:${PORT}/graphql`);
+    console.log(`🚀 Subscriptions ready at ws://localhost:${PORT}/graphql`);
+    console.log(
+      "Available users:",
+      users.map((u) => u.username)
+    );
+    console.log("Total books:", books.length);
+    console.log("Total authors:", authors.length);
+  });
+};
+
+start();
